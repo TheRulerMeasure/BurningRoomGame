@@ -48,6 +48,14 @@ const makeWallDown = (k, tiles, sizeX, sizeY, roomCoordv) => {
     }
 }
 
+const makeWallDownWithDoor = (k, tiles, sizeX, sizeY, roomCoordv) => {
+    const floorCoord = getFloorCoord(k, sizeX, sizeY)
+    for (let i = 0; i < sizeX; i++) {
+        const frame = i == Math.floor(sizeX / 2) ? 5 : 0
+        tiles.push(makeTile(k, roomCoordv, k.vec2(i + floorCoord.x, floorCoord.y + sizeY), frame))
+    }
+}
+
 const makeWallLeft = (k, tiles, sizeX, sizeY, roomCoordv) => {
     const floorCoord = getFloorCoord(k, sizeX, sizeY)
     for (let i = 0; i < 2; i++) {
@@ -77,6 +85,21 @@ const makeTile = (k, roomCoordv, tileCoordv, frame) => {
         k.sprite("ft_tile", { frame: frame ?? 0 }),
         k.layer("background"),
     ])
+}
+
+const makeDoorDown = (k, roomCoordv, tileCoordv) => {
+    const pos = getRoomWorldCoord(k, roomCoordv).add(tileCoordv.scale(TILE_WIDTH, TILE_HEIGHT))
+    const d = k.make([
+        k.pos(pos),
+        k.sprite("ft_tile", { frame: 5 }),
+        k.layer("background"),
+    ])
+    d.add([
+        k.pos(TILE_WIDTH * 0.25, TILE_HEIGHT * 0.25),
+        k.rect(TILE_WIDTH * 0.5, TILE_HEIGHT * 0.5),
+        "door",
+    ])
+    return d
 }
 
 const makeRoom = (k, sizeX, sizeY, roomCoordv) => {

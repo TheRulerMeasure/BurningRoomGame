@@ -24,7 +24,7 @@ const k = kaplay({
             keyboard: ["down", "s"],
         },
     },
-    plugins: [ gamePlugin ]
+    plugins: [ gamePlugin ],
 })
 
 k.run()
