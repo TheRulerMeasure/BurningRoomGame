@@ -61,5 +61,47 @@ const newGameAuto = (k) => ({
     teleportDestPos: k.vec2(),
 })
 
+const makeGameAuto = (k) => {
+    const room = {
+        destInfo: null,
+    }
+    const gAuto = k.make([
+        "game_auto",
+        {
+            currentState: GameStates.NORMAL,
+            newRoomCallback: (destInfo) => room.destInfo = destInfo,
+            gameRoom: room,
+        },
+    ])
+    return gAuto
+}
+
+const updateNormal = (gAuto) => {
+    if (gAuto.gameRoom.destInfo) {
+        return GameStates.ENTERING_TELEPORTER
+    }
+    return -1
+}
+
+const updateEnteringTele = (dt) => {
+    
+}
+
+const addGameAutoSystem = (k) => {
+    k.onUpdate("game_auto", gAuto => {
+        let newState = -1
+        switch (gAuto.currentState) {
+            case GameStates.ENTERING_TELEPORTER:
+                newState = updateEnteringTele(k.dt())
+            default:
+                newState = updateNormal(gAuto)
+                break
+        }
+        if (newState >= 0) {
+            gAuto.currentState = newState
+        }
+    })
+}
+
 export default newGameAuto
 export { gameUpdate, GameStates }
