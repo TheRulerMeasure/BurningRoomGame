@@ -1,12 +1,12 @@
 import makePlayer from "./mob"
 import { addMoverSystem } from "./mover"
 import { getInputVec } from "./kputil"
-import { getWorldPosFromCellvCenter, TILE_HEIGHT, TILE_WIDTH } from "./gameConstant"
-import newGameAuto, { GameStates, gameUpdate } from "./gameAuto"
+import { getWorldPosFromCellvCenter, TILE_HEIGHT } from "./gameConstant"
 import radialShade from "./shaders/radialshade"
 import makeFader, { faderEvent } from "./gameFader"
-import makeRoom, { addDoorSystem, DOOR_DOWN, DOOR_RIGHT, DOOR_UP, getRoomCenterWorldPos } from "./room"
+import { addDoorSystem, getRoomCenterWorldPos } from "./room"
 import makeRooms from "./house"
+import makeGameAuto, { addGameAutoSystem } from "./gameAuto"
 
 const MAX_ASSETS_COUNT = 4
 
@@ -23,37 +23,27 @@ const startLoad = (k, addProgress) => {
 const ready = (k) => {
     k.layers(["background", "game", "foreground"], "game")
 
-    const gameAuto = newGameAuto(k)
-    k.onUpdate(() => gameUpdate(k, gameAuto))
-    addMoverSystem(k, gameAuto)
+    addGameAutoSystem(k)
+    addMoverSystem(k)
     addDoorSystem(k)
-    faderEvent.onUpdate(k, gameAuto)
+    faderEvent.onUpdate(k)
 
     k.onUpdate("player", player => {
-        if (gameAuto.currentState != GameStates.NORMAL) {
-            player.motionAxis = k.vec2(0, 0)
-        } else {
-            player.motionAxis = getInputVec(k)
-        }
+        player.motionAxis = getInputVec(k)
     })
 
     k.add(makeFader(k))
 
-    const newRoomCallback = (destInfo) => {
-        k.camPos(destInfo.camDestPos)
-        k.get("player").forEach(p => {
-            p.pos = destInfo.playerDestPos
-        })
-    }
+    const gameAuto = k.add(makeGameAuto(k))
 
-    const rooms = makeRooms(k, 0, 0, newRoomCallback)
+    const rooms = makeRooms(k, 0, 0, gameAuto.newRoomCallback)
     rooms.forEach(room => {
         room.forEach(t => k.add(t))
     })
 
-    const playerPos = getWorldPosFromCellvCenter(k, k.vec2(4, 3))
+    const playerPos = getWorldPosFromCellvCenter(k, k.vec2(5, 5))
     k.add(makePlayer(k, playerPos))
-    // k.camPos(getRoomCenterWorldPos(k, k.vec2(0, 0)).add(0, TILE_HEIGHT * -0.5))
+    k.camPos(getRoomCenterWorldPos(k, k.vec2(0, 0)).add(0, TILE_HEIGHT * -0.5))
 }
 
 const gameRun = k => {

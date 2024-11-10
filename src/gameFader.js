@@ -1,5 +1,3 @@
-import { GameStates } from "./gameAuto"
-import { TeleportConst } from "./teleporter"
 
 const makeFader = (k) => {
     const shaderParam = {
@@ -20,24 +18,12 @@ const makeFader = (k) => {
     ])
 }
 
-const faderUpdate = (k, fader, gameAuto) => {
+const faderUpdate = (k, fader) => {
     fader.pos = k.vec2(k.camPos())
-
-    if (gameAuto.currentState == GameStates.ENTERING_TELEPORTER) {
-        const enterSpeed = TeleportConst.ENTER_DURATION * TeleportConst.ENTER_DURATION * 100.0
-        fader.shaderParam.u_amount += enterSpeed * k.dt()
-        fader.shaderParam.u_amount = Math.min(1.0, fader.shaderParam.u_amount)
-    } else if (gameAuto.currentState == GameStates.LEAVING_TELEPORTER) {
-        const exitSpeed = TeleportConst.EXIT_DURATION * TeleportConst.EXIT_DURATION * 100.0
-        fader.shaderParam.u_amount -= exitSpeed * k.dt()
-        fader.shaderParam.u_amount = Math.max(0.0, fader.shaderParam.u_amount)
-    } else {
-        fader.shaderParam.u_amount = 0.0
-    }
 }
 
 const faderEvent = {
-    onUpdate: (k, gameAuto) => k.onUpdate("game_fader", fader => faderUpdate(k, fader, gameAuto)),
+    onUpdate: k => k.onUpdate("game_fader", fader => faderUpdate(k, fader)),
 }
 
 export default makeFader

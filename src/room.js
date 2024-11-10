@@ -32,6 +32,17 @@ const makeTile = (k, roomCoordv, tileCoordv, frame) => {
     ])
 }
 
+const makeTileSolid = (k, roomCoordv, tileCoordv, frame) => {
+    const pos = getRoomWorldCoord(k, roomCoordv).add(tileCoordv.scale(TILE_WIDTH, TILE_HEIGHT))
+    return k.make([
+        k.pos(pos),
+        k.sprite("ft_tile", { frame: frame ?? 0 }),
+        k.area(),
+        k.body({ isStatic: true }),
+        k.layer("background"),
+    ])
+}
+
 const makeDoorDown = (k, roomCoordv, tileCoordv, enterCallback) => {
     const tile = makeTile(k, roomCoordv, tileCoordv, 5)
     const tilePos = tile.pos
@@ -110,8 +121,8 @@ const makeFloor = (k, tiles, sizeX, sizeY, roomCoordv) => {
 const makeWallUp = (k, tiles, sizeX, sizeY, roomCoordv) => {
     const floorCoord = getFloorCoord(k, sizeX, sizeY)
     for (let i = 0; i < sizeX; i++) {
-        tiles.push(makeTile(k, roomCoordv, k.vec2(i + floorCoord.x, floorCoord.y - 2), 0))
-        tiles.push(makeTile(k, roomCoordv, k.vec2(i + floorCoord.x, floorCoord.y - 1), 2))
+        tiles.push(makeTileSolid(k, roomCoordv, k.vec2(i + floorCoord.x, floorCoord.y - 2), 0))
+        tiles.push(makeTileSolid(k, roomCoordv, k.vec2(i + floorCoord.x, floorCoord.y - 1), 2))
     }
 }
 
@@ -119,14 +130,14 @@ const makeWallUpWithDoor = (k, tiles, sizeX, sizeY, roomCoordv, enterCallback) =
     const floorCoord = getFloorCoord(k, sizeX, sizeY)
     for (let i = 0; i < sizeX; i++) {
         if (i == Math.floor(sizeX / 2)) {
-            tiles.push(makeTile(k, roomCoordv, k.vec2(i + floorCoord.x, floorCoord.y - 2), 0))
+            tiles.push(makeTileSolid(k, roomCoordv, k.vec2(i + floorCoord.x, floorCoord.y - 2), 0))
             makeDoorUp(k, roomCoordv, k.vec2(i + floorCoord.x, floorCoord.y - 1), enterCallback).forEach(t => {
                 tiles.push(t)
             })
             // tiles.push(makeDoorUp(k, roomCoordv, k.vec2(i + floorCoord.x, floorCoord.y - 1), enterCallback))
         } else {
-            tiles.push(makeTile(k, roomCoordv, k.vec2(i + floorCoord.x, floorCoord.y - 2), 0))
-            tiles.push(makeTile(k, roomCoordv, k.vec2(i + floorCoord.x, floorCoord.y - 1), 2))
+            tiles.push(makeTileSolid(k, roomCoordv, k.vec2(i + floorCoord.x, floorCoord.y - 2), 0))
+            tiles.push(makeTileSolid(k, roomCoordv, k.vec2(i + floorCoord.x, floorCoord.y - 1), 2))
         }
     }
 }
@@ -134,7 +145,7 @@ const makeWallUpWithDoor = (k, tiles, sizeX, sizeY, roomCoordv, enterCallback) =
 const makeWallDown = (k, tiles, sizeX, sizeY, roomCoordv) => {
     const floorCoord = getFloorCoord(k, sizeX, sizeY)
     for (let i = 0; i < sizeX; i++) {
-        tiles.push(makeTile(k, roomCoordv, k.vec2(i + floorCoord.x, floorCoord.y + sizeY), 0))
+        tiles.push(makeTileSolid(k, roomCoordv, k.vec2(i + floorCoord.x, floorCoord.y + sizeY), 0))
     }
 }
 
@@ -147,7 +158,7 @@ const makeWallDownWithDoor = (k, tiles, sizeX, sizeY, roomCoordv, enterCallback)
             })
             // tiles.push(makeDoorDown(k, roomCoordv, k.vec2(i + floorCoord.x, floorCoord.y + sizeY), enterCallback))
         } else {
-            tiles.push(makeTile(k, roomCoordv, k.vec2(i + floorCoord.x, floorCoord.y + sizeY), 0))
+            tiles.push(makeTileSolid(k, roomCoordv, k.vec2(i + floorCoord.x, floorCoord.y + sizeY), 0))
         }
     }
 }
@@ -155,63 +166,63 @@ const makeWallDownWithDoor = (k, tiles, sizeX, sizeY, roomCoordv, enterCallback)
 const makeWallLeft = (k, tiles, sizeX, sizeY, roomCoordv) => {
     const floorCoord = getFloorCoord(k, sizeX, sizeY)
     for (let i = 0; i < 2; i++) {
-        tiles.push(makeTile(k, roomCoordv, k.vec2(floorCoord.x - 1, floorCoord.y - 2 + i), 0))
+        tiles.push(makeTileSolid(k, roomCoordv, k.vec2(floorCoord.x - 1, floorCoord.y - 2 + i), 0))
     }
     for (let i = 0; i < sizeY; i++) {
-        tiles.push(makeTile(k, roomCoordv, k.vec2(floorCoord.x - 1, floorCoord.y + i), 0))
+        tiles.push(makeTileSolid(k, roomCoordv, k.vec2(floorCoord.x - 1, floorCoord.y + i), 0))
     }
-    tiles.push(makeTile(k, roomCoordv, k.vec2(floorCoord.x - 1, floorCoord.y + sizeY), 0))
+    tiles.push(makeTileSolid(k, roomCoordv, k.vec2(floorCoord.x - 1, floorCoord.y + sizeY), 0))
 }
 
 const makeWallLeftWithDoor = (k, tiles, sizeX, sizeY, roomCoordv, enterCallback) => {
     const floorCoord = getFloorCoord(k, sizeX, sizeY)
     for (let i = 0; i < 2; i++) {
-        tiles.push(makeTile(k, roomCoordv, k.vec2(floorCoord.x - 1, floorCoord.y - 2 + i), 0))
+        tiles.push(makeTileSolid(k, roomCoordv, k.vec2(floorCoord.x - 1, floorCoord.y - 2 + i), 0))
     }
     for (let i = 0; i < sizeY; i++) {
         if (i == Math.floor(sizeY / 2) - 1) {
-            tiles.push(makeTile(k, roomCoordv, k.vec2(floorCoord.x - 1, floorCoord.y + i), 1))
+            tiles.push(makeTileSolid(k, roomCoordv, k.vec2(floorCoord.x - 1, floorCoord.y + i), 1))
         } else if (i == Math.floor(sizeY / 2)) {
             makeDoorLeft(k, roomCoordv, k.vec2(floorCoord.x - 1, floorCoord.y + i), enterCallback).forEach(t => {
                 tiles.push(t)
             })
             // tiles.push(makeDoorLeft(k, roomCoordv, k.vec2(floorCoord.x - 1, floorCoord.y + i), enterCallback))
         } else {
-            tiles.push(makeTile(k, roomCoordv, k.vec2(floorCoord.x - 1, floorCoord.y + i), 0))
+            tiles.push(makeTileSolid(k, roomCoordv, k.vec2(floorCoord.x - 1, floorCoord.y + i), 0))
         }
     }
-    tiles.push(makeTile(k, roomCoordv, k.vec2(floorCoord.x - 1, floorCoord.y + sizeY), 0))
+    tiles.push(makeTileSolid(k, roomCoordv, k.vec2(floorCoord.x - 1, floorCoord.y + sizeY), 0))
 }
 
 const makeWallRight = (k, tiles, sizeX, sizeY, roomCoordv) => {
     const floorCoord = getFloorCoord(k, sizeX, sizeY)
     for (let i = 0; i < 2; i++) {
-        tiles.push(makeTile(k, roomCoordv, k.vec2(floorCoord.x + sizeX, floorCoord.y - 2 + i), 0))
+        tiles.push(makeTileSolid(k, roomCoordv, k.vec2(floorCoord.x + sizeX, floorCoord.y - 2 + i), 0))
     }
     for (let i = 0; i < sizeY; i++) {
-        tiles.push(makeTile(k, roomCoordv, k.vec2(floorCoord.x + sizeX, floorCoord.y + i), 0))
+        tiles.push(makeTileSolid(k, roomCoordv, k.vec2(floorCoord.x + sizeX, floorCoord.y + i), 0))
     }
-    tiles.push(makeTile(k, roomCoordv, k.vec2(floorCoord.x + sizeX, floorCoord.y + sizeY), 0))
+    tiles.push(makeTileSolid(k, roomCoordv, k.vec2(floorCoord.x + sizeX, floorCoord.y + sizeY), 0))
 }
 
 const makeWallRightWithDoor = (k, tiles, sizeX, sizeY, roomCoordv, enterCallback) => {
     const floorCoord = getFloorCoord(k, sizeX, sizeY)
     for (let i = 0; i < 2; i++) {
-        tiles.push(makeTile(k, roomCoordv, k.vec2(floorCoord.x + sizeX, floorCoord.y - 2 + i), 0))
+        tiles.push(makeTileSolid(k, roomCoordv, k.vec2(floorCoord.x + sizeX, floorCoord.y - 2 + i), 0))
     }
     for (let i = 0; i < sizeY; i++) {
         if (i == Math.floor(sizeY / 2) - 1) {
-            tiles.push(makeTile(k, roomCoordv, k.vec2(floorCoord.x + sizeX, floorCoord.y + i), 1))
+            tiles.push(makeTileSolid(k, roomCoordv, k.vec2(floorCoord.x + sizeX, floorCoord.y + i), 1))
         } else if (i == Math.floor(sizeY / 2)) {
             makeDoorRight(k, roomCoordv, k.vec2(floorCoord.x + sizeX, floorCoord.y + i), enterCallback).forEach(t => {
                 tiles.push(t)
             })
             // tiles.push(makeDoorRight(k, roomCoordv, k.vec2(floorCoord.x + sizeX, floorCoord.y + i), enterCallback))
         } else {
-            tiles.push(makeTile(k, roomCoordv, k.vec2(floorCoord.x + sizeX, floorCoord.y + i), 0))
+            tiles.push(makeTileSolid(k, roomCoordv, k.vec2(floorCoord.x + sizeX, floorCoord.y + i), 0))
         }
     }
-    tiles.push(makeTile(k, roomCoordv, k.vec2(floorCoord.x + sizeX, floorCoord.y + sizeY), 0))
+    tiles.push(makeTileSolid(k, roomCoordv, k.vec2(floorCoord.x + sizeX, floorCoord.y + sizeY), 0))
 }
 
 const makeRoom = (k, sizeX, sizeY, roomCoordv, enterCallback, doorsOpt) => {

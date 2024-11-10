@@ -18,6 +18,7 @@ const makeMover = (k, pos, width, height, tag, moverComp) => {
         tag,
         "mover",
         {
+            moveProcessing: true,
             motionAxis: k.vec2(),
             acceleration: moverComp.acceleration,
             maxSpeed: moverComp.maxSpeed,
@@ -31,9 +32,9 @@ const makeMover = (k, pos, width, height, tag, moverComp) => {
     return mover
 }
 
-const addMoverSystem = (k, gameAuto) => {
+const addMoverSystem = (k) => {
     k.onFixedUpdate("mover", mover => {
-        if (gameAuto.currentState != GameStates.NORMAL) {
+        if (!mover.moveProcessing) {
             mover.vel = k.vec2()
             return
         }
