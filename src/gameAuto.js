@@ -70,21 +70,29 @@ const makeGameAuto = (k) => {
         {
             currentState: GameStates.NORMAL,
             newRoomCallback: (destInfo) => room.destInfo = destInfo,
-            gameRoom: room,
+            getDestInfo: () => room.destInfo,
+            freeDestInfo: () => room.destInfo = null,
+            transitionTime: 0.0,
         },
     ])
     return gAuto
 }
 
 const updateNormal = (gAuto) => {
-    if (gAuto.gameRoom.destInfo) {
+    if (gAuto.getDestInfo()) {
         return GameStates.ENTERING_TELEPORTER
     }
     return -1
 }
 
-const updateEnteringTele = (dt) => {
-    
+const updateEnteringTele = (k, gAuto, dt) => {
+    gAuto.transitionTime += dt
+    if (gAuto.transitionTime >= TeleportConst.ENTER_DURATION) {
+        gAuto.transitionTime = 0.0
+        k.get("player").forEach(p => p.pos = gAuto.getDestInfo().playerDestPos)
+        return GameStates.LEAVING_TELEPORTER
+    }
+    return -1
 }
 
 const addGameAutoSystem = (k) => {
@@ -92,7 +100,7 @@ const addGameAutoSystem = (k) => {
         let newState = -1
         switch (gAuto.currentState) {
             case GameStates.ENTERING_TELEPORTER:
-                newState = updateEnteringTele(k.dt())
+                newState = updateEnteringTele(gAuto, k.dt())
             default:
                 newState = updateNormal(gAuto)
                 break
