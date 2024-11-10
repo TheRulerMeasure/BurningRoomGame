@@ -36,10 +36,7 @@ const ready = (k) => {
 
     const gameAuto = k.add(makeGameAuto(k))
 
-    const rooms = makeRooms(k, 0, 0, gameAuto.newRoomCallback)
-    rooms.forEach(room => {
-        room.forEach(t => k.add(t))
-    })
+    makeRooms(k, 0, 0, gameAuto.newRoomCallback).forEach(room => k.add(room))
 
     const playerPos = getWorldPosFromCellvCenter(k, k.vec2(5, 5))
     k.add(makePlayer(k, playerPos))
