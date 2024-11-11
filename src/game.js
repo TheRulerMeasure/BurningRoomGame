@@ -10,58 +10,6 @@ import makeGameAuto, { addGameAutoSystem } from "./gameAuto"
 
 const MAX_ASSETS_COUNT = 5
 
-const levelData = [
-    "#############################",
-    "#+++++d+++++++#++++++++d++++#",
-    "#.............#.............#",
-    "#.............#.............#",
-    "#...........................#",
-    "#.............#.............#",
-    "#.............#.............#",
-    "#.............#.............#",
-    "#.............#.............#",
-    "#####################.#######",
-    "#+++++++++++++#++++++.++++++#",
-    "#.............#.............#",
-    "#.............#.............#",
-    "#...........................#",
-    "#.............#.............#",
-    "#.............#.............#",
-    "#.............#.............#",
-    "#.............#.............#",
-    "#####################.#######",
-    "#+++++++++++++#++++++.++++++#",
-    "#.............#.............#",
-    "#...........................#",
-    "#.............#.............#",
-    "#.............#.............#",
-    "#############################",
-]
-const getTileData = (k) => ({
-    tileWidth: TILE_WIDTH,
-    tileHeight: TILE_HEIGHT,
-    tiles: {
-        "#": () => [
-            k.sprite("ft_tile", { frame: 0 }),
-            k.area(),
-            k.body({ isStatic: true }),
-        ],
-        "+": () => [
-            k.sprite("ft_tile", { frame: 2 }),
-            k.area(),
-            k.body({ isStatic: true }),
-        ],
-        ".": () => [
-            k.sprite("ft_tile", { frame: 4 }),
-        ],
-        "d": () => [
-            k.sprite("ft_tile", { frame: 1 }),
-            k.area(),
-            k.body({ isStatic: true }),
-        ],
-    },
-})
-
 const startLoad = (k, addProgress) => {
     k.loadSprite("ft_tile", "textures/tilemaps/ft_tile_sheet.png", {
         sliceX: 6,
@@ -87,11 +35,9 @@ const ready = (k) => {
 
     k.add(makeFader(k))
 
-    k.add(makeGameAuto(k))
+    const gameAuto = k.add(makeGameAuto(k))
 
-    k.addLevel(levelData, getTileData(k))
-
-    // makeRooms(k, 0, 0, gameAuto.newRoomCallback).forEach(room => k.add(room))
+    makeRooms(k, 0, 0, gameAuto.newRoomCallback).forEach(room => k.add(room))
 
     const playerPos = getWorldPosFromCellvCenter(k, k.vec2(5, 5))
     k.add(makePlayer(k, playerPos))

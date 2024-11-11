@@ -28,9 +28,16 @@ const getRoomCenterWorldPos = (k, roomCoordv) => {
     return getRoomWorldCoord(k, roomCoordv).add(offset)
 }
 
+const makeTile = (k, pos, frame) => k.make([
+    k.pos(pos),
+    k.sprite("ft_tile", { frame: frame ?? 0 }),
+    k.layer("background"),
+])
+
 const makeDoor = (k, dir, cb) => k.make([
     k.pos(TILE_WIDTH * 0.25, TILE_HEIGHT * 0.25),
     k.rect(TILE_WIDTH * 0.5, TILE_HEIGHT * 0.5),
+    k.opacity(0),
     k.area(),
     "door",
     {
@@ -38,16 +45,20 @@ const makeDoor = (k, dir, cb) => k.make([
     },
 ])
 
+const makeCollisionRect = (k, pos, width, height) => k.make([
+    k.pos(pos),
+    k.rect(width, height),
+    k.opacity(0.5),
+    k.area(),
+    k.body({ isStatic: true }),
+])
+
 const makeFloorTiles = (k, room, sizeX, sizeY) => {
     const floorCoord = getFloorCoord(k, sizeX, sizeY)
     for (let y = 0; y < sizeY; y++) {
         for (let x = 0; x < sizeX; x++) {
             const tilePos = k.vec2(floorCoord.x + x, floorCoord.y + y).scale(TILE_WIDTH, TILE_HEIGHT)
-            room.add([
-                k.pos(tilePos),
-                k.sprite("ft_tile", { frame: 5 }),
-                k.layer("background"),
-            ])
+            room.add(makeTile(k, tilePos, 5))
         }
     }
 }
@@ -57,33 +68,28 @@ const makeWallUp = (k, room, sizeX, sizeY, hasDoor, enterCallback) => {
     for (let x = 0; x < sizeX; x++) {
         const topTilePos = k.vec2(floorCoord.x + x, floorCoord.y - 2).scale(TILE_WIDTH, TILE_HEIGHT)
         const bottomTilePos = k.vec2(floorCoord.x + x, floorCoord.y - 1).scale(TILE_WIDTH, TILE_HEIGHT)
-        room.add([
-            k.pos(topTilePos),
-            k.sprite("ft_tile", { frame: 0 }),
-            k.area(),
-            k.body({ isStatic: true }),
-            k.layer("background"),
-        ])
+        room.add(makeTile(k, topTilePos, 0))
         if (hasDoor) {
             if (x == Math.floor(sizeX / 2)) {
-                room.add([
-                    k.pos(bottomTilePos),
-                    k.sprite("ft_tile", { frame: 1 }),
-                    k.layer("background"),
-                    k.area(),
-                    k.body({ isStatic: true }),
-                    "door_tile",
-                ]).add(makeDoor(k, DOOR_UP, enterCallback))
+                const doorTile = makeTile(k, bottomTilePos, 1)
+                doorTile.add(makeDoor(k, DOOR_UP, enterCallback))
+                room.add(doorTile)
                 continue
             }
         }
-        room.add([
-            k.pos(bottomTilePos),
-            k.sprite("ft_tile", { frame: 2 }),
-            k.area(),
-            k.body({ isStatic: true }),
-            k.layer("background"),
-        ])
+        room.add(makeTile(k, bottomTilePos, 2))
+    }
+    if (hasDoor) {
+        const rectWidth = (Math.floor(sizeX / 2)) * TILE_WIDTH
+
+        const rectCoordL = k.vec2(floorCoord.x, floorCoord.y - 1)
+        room.add(makeCollisionRect(k, rectCoordL.scale(TILE_WIDTH, TILE_HEIGHT), rectWidth, TILE_HEIGHT))
+
+        const rectCoordR = k.vec2(floorCoord.x + Math.floor(sizeX / 2) + 1, floorCoord.y - 1)
+        room.add(makeCollisionRect(k, rectCoordR.scale(TILE_WIDTH, TILE_HEIGHT), rectWidth, TILE_HEIGHT))
+    } else {
+        const rectCoord = k.vec2(floorCoord.x, floorCoord.y - 2)
+        room.add(makeCollisionRect(k, rectCoord.scale(TILE_WIDTH, TILE_HEIGHT), TILE_WIDTH * sizeX, TILE_HEIGHT * 2))
     }
 }
 
@@ -93,128 +99,96 @@ const makeWallDown = (k, room, sizeX, sizeY, hasDoor, enterCallback) => {
         const tilePos = k.vec2(floorCoord.x + x, floorCoord.y + sizeY).scale(TILE_WIDTH, TILE_HEIGHT)
         if (hasDoor) {
             if (x == Math.floor(sizeX / 2)) {
-                room.add([
-                    k.pos(tilePos),
-                    k.sprite("ft_tile", { frame: 4 }),
-                    k.layer("background"),
-                    k.area(),
-                    k.body({ isStatic: true }),
-                    "door_tile",
-                ]).add(makeDoor(k, DOOR_DOWN, enterCallback))
+                const doorTile = makeTile(k, tilePos, 4)
+                doorTile.add(makeDoor(k, DOOR_DOWN, enterCallback))
+                room.add(doorTile)
                 continue
             }
         }
-        room.add([
-            k.pos(tilePos),
-            k.sprite("ft_tile", { frame: 0 }),
-            k.area(),
-            k.body({ isStatic: true }),
-            k.layer("background"),
-        ])
+        room.add(makeTile(k, tilePos, 0))
+    }
+    if (hasDoor) {
+        const rectWidth = (Math.floor(sizeX / 2)) * TILE_WIDTH
+
+        const rectCoordL = k.vec2(floorCoord.x, floorCoord.y + sizeY)
+        room.add(makeCollisionRect(k, rectCoordL.scale(TILE_WIDTH, TILE_HEIGHT), rectWidth, TILE_HEIGHT))
+
+        const rectCoordR = k.vec2(floorCoord.x + Math.floor(sizeX / 2) + 1, floorCoord.y + sizeY)
+        room.add(makeCollisionRect(k, rectCoordR.scale(TILE_WIDTH, TILE_HEIGHT), rectWidth, TILE_HEIGHT))
+    } else {
+        const rectCoord = k.vec2(floorCoord.x, floorCoord.y + sizeY)
+        room.add(makeCollisionRect(k, rectCoord.scale(TILE_WIDTH, TILE_HEIGHT), TILE_WIDTH * sizeX, TILE_HEIGHT))
     }
 }
 
 const makeWallLeft = (k, room, sizeX, sizeY, hasDoor, enterCallback) => {
     const floorCoord = getFloorCoord(k, sizeX, sizeY)
     for (let y = 0; y < 2; y++) {
-        room.add([
-            k.pos(k.vec2(floorCoord.x - 1, floorCoord.y + y - 2).scale(TILE_WIDTH, TILE_HEIGHT)),
-            k.sprite("ft_tile", { frame: 0 }),
-            k.area(),
-            k.body({ isStatic: true }),
-            k.layer("background"),
-        ])
+        room.add(makeTile(k, k.vec2(floorCoord.x - 1, floorCoord.y + y - 2).scale(TILE_WIDTH, TILE_HEIGHT), 0))
     }
     for (let y = 0; y < sizeY; y++) {
         if (hasDoor) {
             if (y == Math.floor(sizeY / 2) - 1) {
-                room.add([
-                    k.pos(k.vec2(floorCoord.x - 1, floorCoord.y + y).scale(TILE_WIDTH, TILE_HEIGHT)),
-                    k.sprite("ft_tile", { frame: 1 }),
-                    k.area(),
-                    k.body({ isStatic: true }),
-                ])
+                room.add(makeTile(k, k.vec2(floorCoord.x - 1, floorCoord.y + y).scale(TILE_WIDTH, TILE_HEIGHT), 1))
                 continue
             }
             if (y == Math.floor(sizeY / 2)) {
-                room.add([
-                    k.pos(k.vec2(floorCoord.x - 1, floorCoord.y + y).scale(TILE_WIDTH, TILE_HEIGHT)),
-                    k.sprite("ft_tile", { frame: 5 }),
-                    k.layer("background"),
-                    k.area(),
-                    k.body({ isStatic: true }),
-                    "door_tile",
-                ]).add(makeDoor(k, DOOR_LEFT, enterCallback))
+                const doorTile = makeTile(k, k.vec2(floorCoord.x - 1, floorCoord.y + y).scale(TILE_WIDTH, TILE_HEIGHT), 5)
+                doorTile.add(makeDoor(k, DOOR_LEFT, enterCallback))
+                room.add(doorTile)
                 continue
             }
         }
-        room.add([
-            k.pos(k.vec2(floorCoord.x - 1, floorCoord.y + y).scale(TILE_WIDTH, TILE_HEIGHT)),
-            k.sprite("ft_tile", { frame: 0 }),
-            k.area(),
-            k.body({ isStatic: true }),
-            k.layer("background"),
-        ])
+        room.add(makeTile(k, k.vec2(floorCoord.x - 1, floorCoord.y + y).scale(TILE_WIDTH, TILE_HEIGHT), 0))
     }
-    room.add([
-        k.pos(k.vec2(floorCoord.x - 1, floorCoord.y + sizeY).scale(TILE_WIDTH, TILE_HEIGHT)),
-        k.sprite("ft_tile", { frame: 0 }),
-        k.area(),
-        k.body({ isStatic: true }),
-        k.layer("background"),
-    ])
+    room.add(makeTile(k, k.vec2(floorCoord.x - 1, floorCoord.y + sizeY).scale(TILE_WIDTH, TILE_HEIGHT), 0))
+    if (hasDoor) {
+        const rectHeight = (Math.floor(sizeY / 2)) * TILE_HEIGHT
+
+        const rectCoordTop = k.vec2(floorCoord.x - 1, floorCoord.y)
+        room.add(makeCollisionRect(k, rectCoordTop.scale(TILE_WIDTH, TILE_HEIGHT), TILE_WIDTH, rectHeight))
+
+        const rectCoordBottom = k.vec2(floorCoord.x - 1, floorCoord.y + Math.floor(sizeY / 2) + 1)
+        room.add(makeCollisionRect(k, rectCoordBottom.scale(TILE_WIDTH, TILE_HEIGHT), TILE_WIDTH, rectHeight))
+    } else {
+        const rectCoord = k.vec2(floorCoord.x - 1, floorCoord.y)
+        room.add(makeCollisionRect(k, rectCoord.scale(TILE_WIDTH, TILE_HEIGHT), TILE_WIDTH, TILE_HEIGHT * sizeY))
+    }
 }
 
 const makeWallRight = (k, room, sizeX, sizeY, hasDoor, enterCallback) => {
     const floorCoord = getFloorCoord(k, sizeX, sizeY)
     for (let y = 0; y < 2; y++) {
-        room.add([
-            k.pos(k.vec2(floorCoord.x + sizeX, floorCoord.y + y - 2).scale(TILE_WIDTH, TILE_HEIGHT)),
-            k.sprite("ft_tile", { frame: 0 }),
-            k.area(),
-            k.body({ isStatic: true }),
-            k.layer("background"),
-        ])
+        room.add(makeTile(k, k.vec2(floorCoord.x + sizeX, floorCoord.y + y - 2).scale(TILE_WIDTH, TILE_HEIGHT), 0))
     }
     for (let y = 0; y < sizeY; y++) {
         if (hasDoor) {
             if (y == Math.floor(sizeY / 2) - 1) {
-                room.add([
-                    k.pos(k.vec2(floorCoord.x + sizeX, floorCoord.y + y).scale(TILE_WIDTH, TILE_HEIGHT)),
-                    k.sprite("ft_tile", { frame: 1 }),
-                    k.area(),
-                    k.body({ isStatic: true }),
-                    k.layer("background"),
-                ])
+                room.add(makeTile(k, k.vec2(floorCoord.x + sizeX, floorCoord.y + y).scale(TILE_WIDTH, TILE_HEIGHT), 1))
                 continue
             }
             if (y == Math.floor(sizeY / 2)) {
-                room.add([
-                    k.pos(k.vec2(floorCoord.x + sizeX, floorCoord.y + y).scale(TILE_WIDTH, TILE_HEIGHT)),
-                    k.sprite("ft_tile", { frame: 4 }),
-                    k.layer("background"),
-                    k.area(),
-                    k.body({ isStatic: true }),
-                    "door_tile",
-                ]).add(makeDoor(k, DOOR_RIGHT, enterCallback))
+                const doorTile = makeTile(k, k.vec2(floorCoord.x + sizeX, floorCoord.y + y).scale(TILE_WIDTH, TILE_HEIGHT), 4)
+                doorTile.add(makeDoor(k, DOOR_RIGHT, enterCallback))
+                room.add(doorTile)
                 continue
             }
         }
-        room.add([
-            k.pos(k.vec2(floorCoord.x + sizeX, floorCoord.y + y).scale(TILE_WIDTH, TILE_HEIGHT)),
-            k.sprite("ft_tile", { frame: 0 }),
-            k.area(),
-            k.body({ isStatic: true }),
-            k.layer("background"),
-        ])
+        room.add(makeTile(k, k.vec2(floorCoord.x + sizeX, floorCoord.y + y).scale(TILE_WIDTH, TILE_HEIGHT), 0))
     }
-    room.add([
-        k.pos(k.vec2(floorCoord.x + sizeX, floorCoord.y + sizeY).scale(TILE_WIDTH, TILE_HEIGHT)),
-        k.sprite("ft_tile", { frame: 0 }),
-        k.area(),
-        k.body({ isStatic: true }),
-        k.layer("background"),
-    ])
+    room.add(makeTile(k, k.vec2(floorCoord.x + sizeX, floorCoord.y + sizeY).scale(TILE_WIDTH, TILE_HEIGHT), 0))
+    if (hasDoor) {
+        const rectHeight = (Math.floor(sizeY / 2)) * TILE_HEIGHT
+
+        const rectCoordTop = k.vec2(floorCoord.x + sizeX, floorCoord.y)
+        room.add(makeCollisionRect(k, rectCoordTop.scale(TILE_WIDTH, TILE_HEIGHT), TILE_WIDTH, rectHeight))
+
+        const rectCoordBottom = k.vec2(floorCoord.x + sizeX, floorCoord.y + Math.floor(sizeY / 2) + 1)
+        room.add(makeCollisionRect(k, rectCoordBottom.scale(TILE_WIDTH, TILE_HEIGHT), TILE_WIDTH, rectHeight))
+    } else {
+        const rectCoord = k.vec2(floorCoord.x + sizeX, floorCoord.y)
+        room.add(makeCollisionRect(k, rectCoord.scale(TILE_WIDTH, TILE_HEIGHT), TILE_WIDTH, TILE_HEIGHT * sizeY))
+    }
 }
 
 const makeRoom = (k, sizeX, sizeY, roomCoordv, enterCallback, doorsOpt) => {

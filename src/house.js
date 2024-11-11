@@ -39,7 +39,7 @@ const makeRooms = (k, startCoordX, startCoordY, newRoomCallback) => {
     let coordY = startCoordY
     const roomInfos = [
         [ { sizeX: 3, sizeY: 3 }, { sizeX: 9, sizeY: 7 }, ],
-        [ { sizeX: 5, sizeY: 5 }, { sizeX: 3, sizeY: 5 }, ],
+        [ { sizeX: 5, sizeY: 5 }, { sizeX: 5, sizeY: 7 }, ],
     ]
     const enterCallback = (dir) => {
         switch (dir) {
@@ -64,7 +64,7 @@ const makeRooms = (k, startCoordX, startCoordY, newRoomCallback) => {
     rooms.push(makeRoom(k, 3, 3, k.vec2(0, 0), enterCallback, { right: true }))
     rooms.push(makeRoom(k, 9, 7, k.vec2(1, 0), enterCallback, { down: true, left: true }))
     rooms.push(makeRoom(k, 5, 5, k.vec2(0, 1), enterCallback, { right: true }))
-    rooms.push(makeRoom(k, 3, 5, k.vec2(1, 1), enterCallback, { up: true, left: true }))
+    rooms.push(makeRoom(k, 5, 7, k.vec2(1, 1), enterCallback, { up: true, left: true }))
     return rooms
 }
 

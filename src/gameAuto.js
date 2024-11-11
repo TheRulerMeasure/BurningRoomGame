@@ -27,6 +27,7 @@ const makeGameAuto = (k) => {
 const updateNormal = (k, gAuto) => {
     if (gAuto.getDestInfo()) {
         k.get("mover").forEach(mover => mover.moveProcessing = false)
+        k.get("game_fader").forEach(fader => fader.faderOut())
         return GameStates.ENTERING_TELEPORTER
     }
     return -1
@@ -37,6 +38,7 @@ const updateEnteringTele = (k, gAuto, dt) => {
     if (gAuto.transitionTime >= TeleportConst.ENTER_DURATION) {
         gAuto.transitionTime = 0.0
         k.get("player").forEach(p => p.pos = gAuto.getDestInfo().playerDestPos)
+        k.get("game_fader").forEach(fader => fader.faderIn())
         k.camPos(gAuto.getDestInfo().camDestPos)
         return GameStates.LEAVING_TELEPORTER
     }

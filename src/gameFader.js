@@ -1,8 +1,32 @@
+import { TeleportConst } from "./teleporter"
+
+const tweenFadeOut = (k, sp) => {
+    return k.tween(
+        0.0,
+        1.0,
+        TeleportConst.ENTER_DURATION,
+        v => sp.u_amount = v,
+        k.easings.linear
+    )
+}
+
+const tweenFadeIn = (k, sp) => {
+    return k.tween(
+        1.0,
+        0.0,
+        TeleportConst.EXIT_DURATION,
+        v => sp.u_amount = v,
+        k.easings.linear
+    )
+}
 
 const makeFader = (k) => {
     const shaderParam = {
         u_color: k.rgb(0.46, 0.57, 0.59),
         u_amount: 0.0,
+    }
+    const faderParam = {
+        tweener: null,
     }
     return k.make([
         k.pos(0, 0),
@@ -13,7 +37,18 @@ const makeFader = (k) => {
         k.shader("radial_shade", () => shaderParam),
         "game_fader",
         {
-            shaderParam: shaderParam,
+            faderOut: () => {
+                if (faderParam.tweener) {
+                    faderParam.tweener.finish()
+                }
+                faderParam.tweener = tweenFadeOut(k, shaderParam)
+            },
+            faderIn: () => {
+                if (faderParam.tweener) {
+                    faderParam.tweener.finish()
+                }
+                faderParam.tweener = tweenFadeIn(k, shaderParam)
+            },
         },
     ])
 }
