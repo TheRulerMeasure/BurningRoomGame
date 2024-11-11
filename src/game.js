@@ -1,14 +1,66 @@
 import makePlayer from "./mob"
 import { addMoverSystem } from "./mover"
 import { getInputVec } from "./kputil"
-import { getWorldPosFromCellvCenter, TILE_HEIGHT } from "./gameConstant"
+import { getWorldPosFromCellvCenter, TILE_HEIGHT, TILE_WIDTH } from "./gameConstant"
 import radialShade from "./shaders/radialshade"
 import makeFader, { faderEvent } from "./gameFader"
 import { addDoorSystem, getRoomCenterWorldPos } from "./room"
 import makeRooms from "./house"
 import makeGameAuto, { addGameAutoSystem } from "./gameAuto"
 
-const MAX_ASSETS_COUNT = 4
+const MAX_ASSETS_COUNT = 5
+
+const levelData = [
+    "#############################",
+    "#+++++d+++++++#++++++++d++++#",
+    "#.............#.............#",
+    "#.............#.............#",
+    "#...........................#",
+    "#.............#.............#",
+    "#.............#.............#",
+    "#.............#.............#",
+    "#.............#.............#",
+    "#####################.#######",
+    "#+++++++++++++#++++++.++++++#",
+    "#.............#.............#",
+    "#.............#.............#",
+    "#...........................#",
+    "#.............#.............#",
+    "#.............#.............#",
+    "#.............#.............#",
+    "#.............#.............#",
+    "#####################.#######",
+    "#+++++++++++++#++++++.++++++#",
+    "#.............#.............#",
+    "#...........................#",
+    "#.............#.............#",
+    "#.............#.............#",
+    "#############################",
+]
+const getTileData = (k) => ({
+    tileWidth: TILE_WIDTH,
+    tileHeight: TILE_HEIGHT,
+    tiles: {
+        "#": () => [
+            k.sprite("ft_tile", { frame: 0 }),
+            k.area(),
+            k.body({ isStatic: true }),
+        ],
+        "+": () => [
+            k.sprite("ft_tile", { frame: 2 }),
+            k.area(),
+            k.body({ isStatic: true }),
+        ],
+        ".": () => [
+            k.sprite("ft_tile", { frame: 4 }),
+        ],
+        "d": () => [
+            k.sprite("ft_tile", { frame: 1 }),
+            k.area(),
+            k.body({ isStatic: true }),
+        ],
+    },
+})
 
 const startLoad = (k, addProgress) => {
     k.loadSprite("ft_tile", "textures/tilemaps/ft_tile_sheet.png", {
@@ -16,8 +68,9 @@ const startLoad = (k, addProgress) => {
         sliceY: 1,
     }).onFinish(addProgress) // 1
     k.loadSprite("checker_down", "textures/interfaces/checkers2.png").onFinish(addProgress) // 2
-    k.loadFont("pixel_font", "fonts/alpha-beta/alpha-beta-brk.regular.ttf").onFinish(addProgress) // 3
-    k.loadShader("radial_shade", null, radialShade).onFinish(addProgress) // 4
+    k.loadSprite("bean", "sprites/bean.png").onFinish(addProgress) // 3
+    k.loadFont("pixel_font", "fonts/alpha-beta/alpha-beta-brk.regular.ttf").onFinish(addProgress) // 4
+    k.loadShader("radial_shade", null, radialShade).onFinish(addProgress) // 5
 }
 
 const ready = (k) => {
@@ -34,9 +87,11 @@ const ready = (k) => {
 
     k.add(makeFader(k))
 
-    const gameAuto = k.add(makeGameAuto(k))
+    k.add(makeGameAuto(k))
 
-    makeRooms(k, 0, 0, gameAuto.newRoomCallback).forEach(room => k.add(room))
+    k.addLevel(levelData, getTileData(k))
+
+    // makeRooms(k, 0, 0, gameAuto.newRoomCallback).forEach(room => k.add(room))
 
     const playerPos = getWorldPosFromCellvCenter(k, k.vec2(5, 5))
     k.add(makePlayer(k, playerPos))

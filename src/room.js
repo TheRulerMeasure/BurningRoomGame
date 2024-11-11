@@ -70,6 +70,9 @@ const makeWallUp = (k, room, sizeX, sizeY, hasDoor, enterCallback) => {
                     k.pos(bottomTilePos),
                     k.sprite("ft_tile", { frame: 1 }),
                     k.layer("background"),
+                    k.area(),
+                    k.body({ isStatic: true }),
+                    "door_tile",
                 ]).add(makeDoor(k, DOOR_UP, enterCallback))
                 continue
             }
@@ -94,6 +97,9 @@ const makeWallDown = (k, room, sizeX, sizeY, hasDoor, enterCallback) => {
                     k.pos(tilePos),
                     k.sprite("ft_tile", { frame: 4 }),
                     k.layer("background"),
+                    k.area(),
+                    k.body({ isStatic: true }),
+                    "door_tile",
                 ]).add(makeDoor(k, DOOR_DOWN, enterCallback))
                 continue
             }
@@ -135,6 +141,9 @@ const makeWallLeft = (k, room, sizeX, sizeY, hasDoor, enterCallback) => {
                     k.pos(k.vec2(floorCoord.x - 1, floorCoord.y + y).scale(TILE_WIDTH, TILE_HEIGHT)),
                     k.sprite("ft_tile", { frame: 5 }),
                     k.layer("background"),
+                    k.area(),
+                    k.body({ isStatic: true }),
+                    "door_tile",
                 ]).add(makeDoor(k, DOOR_LEFT, enterCallback))
                 continue
             }
@@ -184,6 +193,9 @@ const makeWallRight = (k, room, sizeX, sizeY, hasDoor, enterCallback) => {
                     k.pos(k.vec2(floorCoord.x + sizeX, floorCoord.y + y).scale(TILE_WIDTH, TILE_HEIGHT)),
                     k.sprite("ft_tile", { frame: 4 }),
                     k.layer("background"),
+                    k.area(),
+                    k.body({ isStatic: true }),
+                    "door_tile",
                 ]).add(makeDoor(k, DOOR_RIGHT, enterCallback))
                 continue
             }
