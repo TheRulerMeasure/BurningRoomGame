@@ -53,49 +53,93 @@ const makeCollisionRect = (k, pos, width, height) => k.make([
     k.opacity(0),
     k.area(),
     k.body({ isStatic: true }),
+    "room_wall",
 ])
 
 const drawFloorTiles = (k, room, sizeX, sizeY) => {
     const floorCoord = getFloorCoord(k, sizeX, sizeY)
-    room.onDraw(() => {
+    const floorObj = k.make([
+        k.pos(floorCoord.scale(TILE_WIDTH, TILE_HEIGHT)),
+        k.layer("background"),
+    ])
+    floorObj.onDraw(() => {
         k.drawSprite({
             sprite: "ft_tile",
-            pos: floorCoord.scale(TILE_WIDTH, TILE_HEIGHT),
             width: sizeX * TILE_WIDTH,
             height: sizeY * TILE_HEIGHT,
             frame: 5,
-            // tiled: true,
+            tiled: true,
         })
     })
+    room.add(floorObj)
 }
 
-const makeFloorTiles = (k, room, sizeX, sizeY) => {
+const drawWallUp = (k, room, sizeX, sizeY, hasDoor) => {
     const floorCoord = getFloorCoord(k, sizeX, sizeY)
-    for (let y = 0; y < sizeY; y++) {
+    const wallObj = k.make([
+        k.pos(floorCoord.add(0, -2).scale(TILE_WIDTH, TILE_HEIGHT)),
+        k.layer("background"),
+    ])
+    wallObj.onDraw(() => {
+        k.drawSprite({
+            sprite: "ft_tile",
+            width: sizeX * TILE_WIDTH,
+            height: TILE_HEIGHT * 2,
+            frame: 0,
+            tiled: true,
+        })
         for (let x = 0; x < sizeX; x++) {
-            const tilePos = k.vec2(floorCoord.x + x, floorCoord.y + y).scale(TILE_WIDTH, TILE_HEIGHT)
-            // room.add(makeTile(k, tilePos, 5))
+            if (hasDoor && (x == Math.floor(sizeX / 2))) {
+                continue
+            }
+            k.drawSprite({
+                sprite: "ft_tile",
+                pos: k.vec2(x * TILE_WIDTH, TILE_HEIGHT),
+                frame: 2,
+            })
         }
-    }
+    })
+    room.add(wallObj)
+}
+
+const drawWallDown = (k, room, sizeX, sizeY, hasDoor) => {
+    const floorCoord = getFloorCoord(k, sizeX, sizeY)
+    const wallObj = k.make([
+        k.pos(floorCoord.add(0, sizeY).scale(TILE_WIDTH, TILE_HEIGHT)),
+        k.layer("background"),
+    ])
+    wallObj.onDraw(() => {
+        if (hasDoor) {
+            for (let x = 0; x < sizeX; x++) {
+                if (x == Math.floor(sizeX / 2)) {
+                    continue
+                }
+                k.drawSprite({
+                    sprite: "ft_tile",
+                    pos: k.vec2(TILE_WIDTH * x, 0),
+                    frame: 0,
+                })
+            }
+        } else {
+            k.drawSprite({
+                sprite: "ft_tile",
+                width: TILE_WIDTH * sizeX,
+                height: TILE_HEIGHT,
+                tiled: true,
+            })
+        }
+    })
+    room.add(wallObj)
 }
 
 const makeWallUp = (k, room, sizeX, sizeY, hasDoor, enterCallback) => {
     const floorCoord = getFloorCoord(k, sizeX, sizeY)
-    for (let x = 0; x < sizeX; x++) {
-        const topTilePos = k.vec2(floorCoord.x + x, floorCoord.y - 2).scale(TILE_WIDTH, TILE_HEIGHT)
-        const bottomTilePos = k.vec2(floorCoord.x + x, floorCoord.y - 1).scale(TILE_WIDTH, TILE_HEIGHT)
-        // room.add(makeTile(k, topTilePos, 0))
-        if (hasDoor) {
-            if (x == Math.floor(sizeX / 2)) {
-                const doorTile = makeTile(k, bottomTilePos, 1)
-                doorTile.add(makeDoor(k, DOOR_UP, enterCallback))
-                room.add(doorTile)
-                continue
-            }
-        }
-        // room.add(makeTile(k, bottomTilePos, 2))
-    }
     if (hasDoor) {
+        const doorPos = k.vec2(floorCoord.x + Math.floor(sizeX / 2), floorCoord.y - 1).scale(TILE_WIDTH, TILE_HEIGHT)
+        const doorTile = makeTile(k, doorPos, 1)
+        doorTile.add(makeDoor(k, DOOR_UP, enterCallback))
+        room.add(doorTile)
+
         const rectWidth = (Math.floor(sizeX / 2)) * TILE_WIDTH
 
         const rectCoordL = k.vec2(floorCoord.x, floorCoord.y - 1)
@@ -111,19 +155,12 @@ const makeWallUp = (k, room, sizeX, sizeY, hasDoor, enterCallback) => {
 
 const makeWallDown = (k, room, sizeX, sizeY, hasDoor, enterCallback) => {
     const floorCoord = getFloorCoord(k, sizeX, sizeY)
-    for (let x = 0; x < sizeX; x++) {
-        const tilePos = k.vec2(floorCoord.x + x, floorCoord.y + sizeY).scale(TILE_WIDTH, TILE_HEIGHT)
-        if (hasDoor) {
-            if (x == Math.floor(sizeX / 2)) {
-                const doorTile = makeTile(k, tilePos, 4)
-                doorTile.add(makeDoor(k, DOOR_DOWN, enterCallback))
-                room.add(doorTile)
-                continue
-            }
-        }
-        // room.add(makeTile(k, tilePos, 0))
-    }
     if (hasDoor) {
+        const tilePos = k.vec2(floorCoord.x + Math.floor(sizeX / 2), floorCoord.y + sizeY).scale(TILE_WIDTH, TILE_HEIGHT)
+        const doorTile = makeTile(k, tilePos, 4)
+        doorTile.add(makeDoor(k, DOOR_DOWN, enterCallback))
+        room.add(doorTile)
+
         const rectWidth = (Math.floor(sizeX / 2)) * TILE_WIDTH
 
         const rectCoordL = k.vec2(floorCoord.x, floorCoord.y + sizeY)
@@ -139,26 +176,11 @@ const makeWallDown = (k, room, sizeX, sizeY, hasDoor, enterCallback) => {
 
 const makeWallLeft = (k, room, sizeX, sizeY, hasDoor, enterCallback) => {
     const floorCoord = getFloorCoord(k, sizeX, sizeY)
-    for (let y = 0; y < 2; y++) {
-        // room.add(makeTile(k, k.vec2(floorCoord.x - 1, floorCoord.y + y - 2).scale(TILE_WIDTH, TILE_HEIGHT), 0))
-    }
-    for (let y = 0; y < sizeY; y++) {
-        if (hasDoor) {
-            if (y == Math.floor(sizeY / 2) - 1) {
-                // room.add(makeTile(k, k.vec2(floorCoord.x - 1, floorCoord.y + y).scale(TILE_WIDTH, TILE_HEIGHT), 1))
-                continue
-            }
-            if (y == Math.floor(sizeY / 2)) {
-                const doorTile = makeTile(k, k.vec2(floorCoord.x - 1, floorCoord.y + y).scale(TILE_WIDTH, TILE_HEIGHT), 5)
-                doorTile.add(makeDoor(k, DOOR_LEFT, enterCallback))
-                room.add(doorTile)
-                continue
-            }
-        }
-        // room.add(makeTile(k, k.vec2(floorCoord.x - 1, floorCoord.y + y).scale(TILE_WIDTH, TILE_HEIGHT), 0))
-    }
-    // room.add(makeTile(k, k.vec2(floorCoord.x - 1, floorCoord.y + sizeY).scale(TILE_WIDTH, TILE_HEIGHT), 0))
     if (hasDoor) {
+        const doorTile = makeTile(k, k.vec2(floorCoord.x - 1, floorCoord.y + Math.floor(sizeY / 2)).scale(TILE_WIDTH, TILE_HEIGHT), 5)
+        doorTile.add(makeDoor(k, DOOR_LEFT, enterCallback))
+        room.add(doorTile)
+
         const rectHeight = (Math.floor(sizeY / 2)) * TILE_HEIGHT
 
         const rectCoordTop = k.vec2(floorCoord.x - 1, floorCoord.y)
@@ -174,26 +196,11 @@ const makeWallLeft = (k, room, sizeX, sizeY, hasDoor, enterCallback) => {
 
 const makeWallRight = (k, room, sizeX, sizeY, hasDoor, enterCallback) => {
     const floorCoord = getFloorCoord(k, sizeX, sizeY)
-    for (let y = 0; y < 2; y++) {
-        // room.add(makeTile(k, k.vec2(floorCoord.x + sizeX, floorCoord.y + y - 2).scale(TILE_WIDTH, TILE_HEIGHT), 0))
-    }
-    for (let y = 0; y < sizeY; y++) {
-        if (hasDoor) {
-            if (y == Math.floor(sizeY / 2) - 1) {
-                // room.add(makeTile(k, k.vec2(floorCoord.x + sizeX, floorCoord.y + y).scale(TILE_WIDTH, TILE_HEIGHT), 1))
-                continue
-            }
-            if (y == Math.floor(sizeY / 2)) {
-                const doorTile = makeTile(k, k.vec2(floorCoord.x + sizeX, floorCoord.y + y).scale(TILE_WIDTH, TILE_HEIGHT), 4)
-                doorTile.add(makeDoor(k, DOOR_RIGHT, enterCallback))
-                room.add(doorTile)
-                continue
-            }
-        }
-        // room.add(makeTile(k, k.vec2(floorCoord.x + sizeX, floorCoord.y + y).scale(TILE_WIDTH, TILE_HEIGHT), 0))
-    }
-    // room.add(makeTile(k, k.vec2(floorCoord.x + sizeX, floorCoord.y + sizeY).scale(TILE_WIDTH, TILE_HEIGHT), 0))
     if (hasDoor) {
+        const doorTile = makeTile(k, k.vec2(floorCoord.x + sizeX, floorCoord.y + Math.floor(sizeY / 2)).scale(TILE_WIDTH, TILE_HEIGHT), 4)
+        doorTile.add(makeDoor(k, DOOR_RIGHT, enterCallback))
+        room.add(doorTile)
+
         const rectHeight = (Math.floor(sizeY / 2)) * TILE_HEIGHT
 
         const rectCoordTop = k.vec2(floorCoord.x + sizeX, floorCoord.y)
@@ -207,14 +214,43 @@ const makeWallRight = (k, room, sizeX, sizeY, hasDoor, enterCallback) => {
     }
 }
 
+const blockDoors = (k, sizeX, sizeY, roomCoordv, doorsOpt) => {
+    const roomPos = getRoomWorldCoord(k, roomCoordv)
+    const makeDoorBlocker = pos => k.make([
+        k.pos(pos.add(roomPos)),
+        k.sprite("x_mark"),
+        k.area(),
+        k.body({ isStatic: true }),
+        "door_blocker",
+    ])
+    const floorCoord = getFloorCoord(k, sizeX, sizeY)
+    if (doorsOpt.up) {
+        k.add(makeDoorBlocker(floorCoord.add(Math.floor(sizeX / 2), -1).scale(TILE_WIDTH, TILE_HEIGHT)))
+    }
+    if (doorsOpt.down) {
+        k.add(makeDoorBlocker(floorCoord.add(Math.floor(sizeX / 2), sizeY).scale(TILE_WIDTH, TILE_HEIGHT)))
+    }
+    if (doorsOpt.left) {
+        k.add(makeDoorBlocker(floorCoord.add(-1, Math.floor(sizeY / 2)).scale(TILE_WIDTH, TILE_HEIGHT)))
+    }
+    if (doorsOpt.right) {
+        k.add(makeDoorBlocker(floorCoord.add(sizeX, Math.floor(sizeY / 2)).scale(TILE_WIDTH, TILE_HEIGHT)))
+    }
+}
+
 const makeRoom = (k, sizeX, sizeY, roomCoordv, enterCallback, doorsOpt) => {
     const roomPos = getRoomWorldCoord(k, roomCoordv)
     const room = k.make([
         k.pos(roomPos),
+        {
+            blockDoors: () => blockDoors(k, sizeX, sizeY, roomCoordv, doorsOpt),
+            unblockDoors: () => k.get("door_blocker").forEach(blocker => k.destroy(blocker)),
+        },
     ])
-    // makeFloorTiles(k, room, sizeX, sizeY)
     drawFloorTiles(k, room, sizeX, sizeY)
+    drawWallUp(k, room, sizeX, sizeY, doorsOpt.up)
     makeWallUp(k, room, sizeX, sizeY, doorsOpt.up, enterCallback)
+    drawWallDown(k, room, sizeX, sizeY, doorsOpt.down)
     makeWallDown(k, room, sizeX, sizeY, doorsOpt.down, enterCallback)
     makeWallLeft(k, room, sizeX, sizeY, doorsOpt.left, enterCallback)
     makeWallRight(k, room, sizeX, sizeY, doorsOpt.right, enterCallback)

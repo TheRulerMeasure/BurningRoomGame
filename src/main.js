@@ -23,6 +23,9 @@ const k = kaplay({
         moveDown: {
             keyboard: ["down", "s"],
         },
+        shoot: {
+            mouse: ["left"],
+        },
     },
     plugins: [ gamePlugin ],
 })
