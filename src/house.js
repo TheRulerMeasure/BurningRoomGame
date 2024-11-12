@@ -37,9 +37,21 @@ const makeRooms = (k, startCoordX, startCoordY, newRoomCallback) => {
     let rooms = []
     let coordX = startCoordX
     let coordY = startCoordY
+    const D = { down: true }
+    const U = { up: true }
+    const UD = { up: true, down: true }
+    const DR = { down: true, right: true }
+    const DL = { down: true, left: true }
+    const UR = { up: true, right: true }
+    const UDR = { up: true, down: true, right: true }
+    const UL = { up: true, left: true }
+    const UDL = { up: true, down: true, left: true }
+    const UDLR = { up: true, down: true, left: true, right: true }
     const roomInfos = [
-        [ { sizeX: 3, sizeY: 3 }, { sizeX: 9, sizeY: 7 }, ],
-        [ { sizeX: 5, sizeY: 5 }, { sizeX: 5, sizeY: 7 }, ],
+        [ { sizeX: 3, sizeY: 3, doors: DR, }, { sizeX: 9, sizeY: 7, doors: DL, }, { sizeX: 9, sizeY: 7, doors: D, }, ],
+        [ { sizeX: 5, sizeY: 5, doors: UDR, }, { sizeX: 5, sizeY: 7, doors: UDL, }, { sizeX: 9, sizeY: 7, doors: UD, }, ],
+        [ { sizeX: 9, sizeY: 7, doors: UDR, }, { sizeX: 9, sizeY: 7, doors: UDLR, }, { sizeX: 9, sizeY: 7, doors: UDL, }, ],
+        [ { sizeX: 9, sizeY: 7, doors: UR, }, { sizeX: 9, sizeY: 7, doors: UL, }, { sizeX: 9, sizeY: 7, doors: U, }, ],
     ]
     const enterCallback = (dir) => {
         switch (dir) {
@@ -61,10 +73,12 @@ const makeRooms = (k, startCoordX, startCoordY, newRoomCallback) => {
                 break
         }
     }
-    rooms.push(makeRoom(k, 3, 3, k.vec2(0, 0), enterCallback, { right: true }))
-    rooms.push(makeRoom(k, 9, 7, k.vec2(1, 0), enterCallback, { down: true, left: true }))
-    rooms.push(makeRoom(k, 5, 5, k.vec2(0, 1), enterCallback, { right: true }))
-    rooms.push(makeRoom(k, 5, 7, k.vec2(1, 1), enterCallback, { up: true, left: true }))
+    for (let y = 0; y < roomInfos.length; y++) {
+        for (let x = 0; x < roomInfos[y].length; x++) {
+            const roomInfo = roomInfos[y][x]
+            rooms.push(makeRoom(k, roomInfo.sizeX, roomInfo.sizeY, k.vec2(x, y), enterCallback, roomInfo.doors))
+        }
+    }
     return rooms
 }
 
