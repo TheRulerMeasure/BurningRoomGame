@@ -12,12 +12,6 @@ const makePlayer = (k, pos) => {
     return player
 }
 
-const makeEnemy = (k, pos) => {
-    const comp = createMoverComp(1153, 109, 960)
-    const enemy = makeMover(k, pos, 32, 32, "enemy", comp)
-    return enemy
-}
-
 const addPlayerSystem = (k) => {
     k.onUpdate("player", player => {
         player.motionAxis = getInputVec(k)

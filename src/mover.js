@@ -23,9 +23,6 @@ const makeMover = (k, pos, width, height, tag, moverComp) => {
             acceleration: moverComp.acceleration,
             maxSpeed: moverComp.maxSpeed,
             friction: moverComp.friction,
-            slideVelocity: k.vec2(),
-            beforeResolvePos: k.vec2(),
-            afterResolvePos: k.vec2(),
         },
     ])
     mover.collisionIgnore.push("mover")
@@ -52,7 +49,6 @@ const addMoverSystem = (k) => {
             vel = vel.unit().scale(Math.min(vel.len(), mover.maxSpeed))
         }
         mover.vel = k.vec2(vel)
-        mover.beforeResolvePos = k.vec2(mover.pos)
     })
 }
 

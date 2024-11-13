@@ -8,7 +8,7 @@ import makeRooms from "./house"
 import makeGameAuto, { addGameAutoSystem } from "./gameAuto"
 import { addBulletSystem } from "./bullet"
 
-const MAX_ASSETS_COUNT = 6
+const MAX_ASSETS_COUNT = 9
 
 const startLoad = (k, addProgress) => {
     k.loadSprite("ft_tile", "textures/tilemaps/ft_tile_sheet.png", {
@@ -19,8 +19,24 @@ const startLoad = (k, addProgress) => {
     k.loadSprite("bean", "sprites/bean.png").onFinish(addProgress) // 3
     k.loadSprite("bullet_sp", "textures/projectiles/bullet.png").onFinish(addProgress) // 4
     k.loadSprite("x_mark", "textures/obstacles/x_mark.png").onFinish(addProgress) // 5
-    k.loadFont("pixel_font", "fonts/alpha-beta/alpha-beta-brk.regular.ttf").onFinish(addProgress) // 6
-    k.loadShader("radial_shade", null, radialShade).onFinish(addProgress) // 7
+    k.loadSprite("warning_rect", "textures/interfaces/warning_rect_sheet.png", {
+        sliceX: 3,
+        sliceY: 1,
+        anims: {
+            dance: { from: 0, to: 2 },
+        },
+    }).onFinish(addProgress) // 6
+    k.loadSprite("slime", "textures/mobs/slime-Sheet.png", {
+        sliceX: 5,
+        sliceY: 1,
+        anims: {
+            idle: { from: 0, to: 1, speed: 17, loop: true },
+            spawn: { from: 2, to: 4, speed: 15 },
+            die: { from: 4, to: 2, speed: 15 },
+        },
+    }).onFinish(addProgress) // 7
+    k.loadFont("pixel_font", "fonts/alpha-beta/alpha-beta-brk.regular.ttf").onFinish(addProgress) // 8
+    k.loadShader("radial_shade", null, radialShade).onFinish(addProgress) // 9
 }
 
 const ready = (k) => {

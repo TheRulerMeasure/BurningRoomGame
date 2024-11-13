@@ -31,9 +31,7 @@ const getRoomCenterWorldPos = (k, roomCoordv) => {
 const makeTile = (k, pos, frame) => k.make([
     k.pos(pos),
     k.sprite("ft_tile", { frame: frame ?? 0 }),
-    // k.sprite("bean"),
     k.layer("background"),
-    // k.offscreen({ hide: true }),
 ])
 
 const makeDoor = (k, dir, cb) => k.make([
@@ -242,6 +240,7 @@ const makeRoom = (k, sizeX, sizeY, roomCoordv, enterCallback, doorsOpt) => {
     const roomPos = getRoomWorldCoord(k, roomCoordv)
     const room = k.make([
         k.pos(roomPos),
+        k.offscreen({ hide: true }),
         {
             blockDoors: () => blockDoors(k, sizeX, sizeY, roomCoordv, doorsOpt),
             unblockDoors: () => k.get("door_blocker").forEach(blocker => k.destroy(blocker)),
