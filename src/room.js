@@ -1,4 +1,5 @@
 import { TILE_HEIGHT, TILE_WIDTH } from "./gameConstant"
+import makeSlimea from "./slimea"
 
 const MAX_ROOM_WIDTH = 12
 const MAX_ROOM_HEIGHT = 10
@@ -212,6 +213,25 @@ const makeWallRight = (k, room, sizeX, sizeY, hasDoor, enterCallback) => {
     }
 }
 
+const initMonsters = (k, sizeX, sizeY, roomCoordv, amount) => {
+    const floorCoord = getFloorCoord(k, sizeX, sizeY)
+    const posVec = getRoomWorldCoord(k, roomCoordv).add(floorCoord.scale(TILE_WIDTH, TILE_HEIGHT))
+    for (let i = 0; i < amount; i++) {
+        const offsetX = k.rand() * (TILE_WIDTH * sizeX - 64)
+        const offsetY = k.rand() * (TILE_HEIGHT * sizeY - 64)
+        k.add([
+            k.pos(posVec.add(32 + offsetX, 32 + offsetY)),
+            k.sprite("warning_rect", { anim: "dance" }),
+            k.anchor("center"),
+            k.layer("foreground"),
+        ])
+        console.log("spawned a monster")
+        k.tween(0, 1, 1, v => {}).onEnd(() => {
+            k.add(makeSlimea(k, posVec.add(32 + offsetX, 32 + offsetY)))
+        })
+    }
+}
+
 const blockDoors = (k, sizeX, sizeY, roomCoordv, doorsOpt) => {
     const roomPos = getRoomWorldCoord(k, roomCoordv)
     const makeDoorBlocker = pos => k.make([
@@ -244,6 +264,7 @@ const makeRoom = (k, sizeX, sizeY, roomCoordv, enterCallback, doorsOpt) => {
         {
             blockDoors: () => blockDoors(k, sizeX, sizeY, roomCoordv, doorsOpt),
             unblockDoors: () => k.get("door_blocker").forEach(blocker => k.destroy(blocker)),
+            initMonsters: amount => initMonsters(k, sizeX, sizeY, roomCoordv, amount),
         },
     ])
     drawFloorTiles(k, room, sizeX, sizeY)

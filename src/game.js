@@ -7,6 +7,7 @@ import { addDoorSystem, getRoomCenterWorldPos } from "./room"
 import makeRooms from "./house"
 import makeGameAuto, { addGameAutoSystem } from "./gameAuto"
 import { addBulletSystem } from "./bullet"
+import { addSlimeaSystem } from "./slimea"
 
 const MAX_ASSETS_COUNT = 9
 
@@ -23,7 +24,7 @@ const startLoad = (k, addProgress) => {
         sliceX: 3,
         sliceY: 1,
         anims: {
-            dance: { from: 0, to: 2 },
+            dance: { from: 0, to: 2, loop: true, speed: 15 },
         },
     }).onFinish(addProgress) // 6
     k.loadSprite("slime", "textures/mobs/slime-Sheet.png", {
@@ -48,6 +49,7 @@ const ready = (k) => {
     addBulletSystem(k)
     faderEvent.onUpdate(k)
     addPlayerSystem(k)
+    addSlimeaSystem(k)
 
     k.add(makeFader(k))
 

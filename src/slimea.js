@@ -1,4 +1,4 @@
-import makeMover from "./mover"
+import makeMover, { createMoverComp } from "./mover"
 
 const SlimeaStates = {
     IDLING:     0,

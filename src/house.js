@@ -1,6 +1,12 @@
 import { TILE_HEIGHT, TILE_WIDTH } from "./gameConstant"
 import makeRoom, { DOOR_DOWN, DOOR_RIGHT, DOOR_UP, getRoomCenterWorldPos } from "./room"
 
+const makeWarningMark = (k, posVec) => k.make([
+    k.pos(posVec),
+    k.sprite("warning_rect", { anim: "dance" }),
+    k.anchor("center"),
+])
+
 const enterRight = (k, coordX, coordY, roomInfos, newRoomCallback) => {
     const x = Math.floor(roomInfos[coordY][coordX].sizeX / 2) * TILE_WIDTH * -1
     newRoomCallback({
@@ -33,17 +39,13 @@ const enterDown = (k, coordX, coordY, roomInfos, newRoomCallback) => {
     })
 }
 
-const initMonsters = amount => {
-    console.log(`entered monster room. monsters count = ${amount}`)
-}
-
 const checkRoom = (coordX, coordY, maxColumn, rooms, monstersCount) => {
     if (monstersCount <= 0) {
         return
     }
     const index = (coordX % maxColumn) + (coordY * maxColumn)
     rooms[index].blockDoors()
-    initMonsters(monstersCount)
+    rooms[index].initMonsters(monstersCount)
 }
 
 const makeRooms = (k, startCoordX, startCoordY, newRoomCallback) => {
@@ -69,7 +71,7 @@ const makeRooms = (k, startCoordX, startCoordY, newRoomCallback) => {
     ]
     const monsterRooms = [
         [ 0, 0, 0, ],
-        [ 0, 4, 0, ],
+        [ 0, 2, 0, ],
         [ 0, 0, 0, ],
         [ 0, 0, 0, ],
     ]
@@ -78,23 +80,24 @@ const makeRooms = (k, startCoordX, startCoordY, newRoomCallback) => {
             case DOOR_RIGHT:
                 coordX += 1
                 enterRight(k, coordX, coordY, roomInfos, newRoomCallback)
-                checkRoom(coordX, coordY, roomMaxColumn, rooms, monsterRooms[coordY][coordX])
                 break
             case DOOR_UP:
                 coordY -= 1
                 enterUp(k, coordX, coordY, roomInfos, newRoomCallback)
-                checkRoom(coordX, coordY, roomMaxColumn, rooms, monsterRooms[coordY][coordX])
                 break
             case DOOR_DOWN:
                 coordY += 1
                 enterDown(k, coordX, coordY, roomInfos, newRoomCallback)
-                checkRoom(coordX, coordY, roomMaxColumn, rooms, monsterRooms[coordY][coordX])
                 break
             default:
                 coordX -= 1
                 enterLeft(k, coordX, coordY, roomInfos, newRoomCallback)
-                checkRoom(coordX, coordY, roomMaxColumn, rooms, monsterRooms[coordY][coordX])
                 break
+        }
+        if (monsterRooms[coordY][coordX] > 0) {
+            const index = (coordX % roomMaxColumn) + (coordY * roomMaxColumn)
+            rooms[index].blockDoors()
+            rooms[index].initMonsters(monsterRooms[coordY][coordX])
         }
     }
     for (let y = 0; y < roomInfos.length; y++) {
