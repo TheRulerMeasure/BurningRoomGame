@@ -53,7 +53,7 @@ const onSlimeaLeaveRecovering = (k, slimea) => {
 }
 
 const onSlimeaEnterDying = (k, slimea) => {
-    slimea.died()
+    slimea.trigger("died")
     slimea.spritePlay("die")
 }
 
@@ -249,13 +249,6 @@ const makeSlimea = (k, posVec) => {
     slimea.spawned = false
     slimea.spritePlay = animName => slimeSp.play(animName)
     slimea.setSpriteFlip = flip => slimeSp.flipX = flip
-    slimea.diedListeners = []
-    slimea.onDied = function (cb) {
-        this.diedListeners.push(cb)
-    }
-    slimea.died = function () {
-        this.diedListeners.forEach(cb => cb())
-    }
     return slimea
 }
 

@@ -213,48 +213,74 @@ const makeWallRight = (k, room, sizeX, sizeY, hasDoor, enterCallback) => {
     }
 }
 
-const initMonsters = (k, sizeX, sizeY, roomCoordv, amount, killCallback) => {
-    const floorCoord = getFloorCoord(k, sizeX, sizeY)
-    const posVec = getRoomWorldCoord(k, roomCoordv).add(floorCoord.scale(TILE_WIDTH, TILE_HEIGHT))
+const initMonstersCs = (k, rComp, amount, diedCallback) => {
+    const floorCoord = getFloorCoord(k, rComp.sizeX, rComp.sizeY)
+    const posVec = getRoomWorldCoord(k, rComp.roomCoordv).add(floorCoord.scale(TILE_WIDTH, TILE_HEIGHT))
     for (let i = 0; i < amount; i++) {
-        const offsetX = k.rand() * (TILE_WIDTH * sizeX - 64)
-        const offsetY = k.rand() * (TILE_HEIGHT * sizeY - 64)
+        const offsetX = 32 + k.rand() * (TILE_WIDTH * rComp.sizeX - 64)
+        const offsetY = 32 + k.rand() * (TILE_HEIGHT * rComp.sizeY - 64)
         const warningRect = k.add([
-            k.pos(posVec.add(32 + offsetX, 32 + offsetY)),
+            k.pos(posVec.add(offsetX, offsetY)),
             k.sprite("warning_rect", { anim: "dance" }),
             k.anchor("center"),
             k.layer("foreground"),
         ])
         k.tween(0, 1, 1.12, _ => {}).onEnd(() => {
-            const monster = makeSlimea(k, posVec.add(32 + offsetX, 32 + offsetY))
-            k.add(monster)
-            monster.onDied(killCallback)
             k.destroy(warningRect)
+            const monster = makeSlimea(k, posVec.add(offsetX, offsetY))
+            const diedEvent = monster.on("died", diedCallback)
+            monster.onDestroy(() => diedEvent.cancel())
+            k.add(monster)
         })
     }
 }
 
-const blockDoors = (k, sizeX, sizeY, roomCoordv, doorsOpt) => {
-    const roomPos = getRoomWorldCoord(k, roomCoordv)
-    const makeDoorBlocker = pos => k.make([
-        k.pos(pos.add(roomPos)),
-        k.sprite("x_mark"),
-        k.area(),
-        k.body({ isStatic: true }),
-        "door_blocker",
-    ])
-    const floorCoord = getFloorCoord(k, sizeX, sizeY)
-    if (doorsOpt.up) {
-        k.add(makeDoorBlocker(floorCoord.add(Math.floor(sizeX / 2), -1).scale(TILE_WIDTH, TILE_HEIGHT)))
-    }
-    if (doorsOpt.down) {
-        k.add(makeDoorBlocker(floorCoord.add(Math.floor(sizeX / 2), sizeY).scale(TILE_WIDTH, TILE_HEIGHT)))
-    }
-    if (doorsOpt.left) {
-        k.add(makeDoorBlocker(floorCoord.add(-1, Math.floor(sizeY / 2)).scale(TILE_WIDTH, TILE_HEIGHT)))
-    }
-    if (doorsOpt.right) {
-        k.add(makeDoorBlocker(floorCoord.add(sizeX, Math.floor(sizeY / 2)).scale(TILE_WIDTH, TILE_HEIGHT)))
+const roomComp = (k, sizeX, sizeY, roomCoordv, doorsOpt) => {
+    return {
+        id: "roomComp",
+        sizeX: sizeX,
+        sizeY: sizeY,
+        roomCoordv: roomCoordv,
+        doorsOpt: doorsOpt,
+        monstersCount: 0,
+        blockDoors() {
+            const roomPos = getRoomWorldCoord(k, this.roomCoordv)
+            const makeDoorBlocker = posVec => k.make([
+                k.pos(posVec.add(roomPos)),
+                k.sprite("x_mark"),
+                k.area(),
+                k.body({ isStatic: true }),
+                "door_blocker",
+            ])
+            const floorCoord = getFloorCoord(k, this.sizeX, this.sizeY)
+            if (this.doorsOpt.up) {
+                k.add(makeDoorBlocker(floorCoord.add(Math.floor(this.sizeX / 2), -1).scale(TILE_WIDTH, TILE_HEIGHT)))
+            }
+            if (this.doorsOpt.down) {
+                k.add(makeDoorBlocker(floorCoord.add(Math.floor(this.sizeX / 2), this.sizeY).scale(TILE_WIDTH, TILE_HEIGHT)))
+            }
+            if (this.doorsOpt.left) {
+                k.add(makeDoorBlocker(floorCoord.add(-1, Math.floor(this.sizeY / 2)).scale(TILE_WIDTH, TILE_HEIGHT)))
+            }
+            if (this.doorsOpt.right) {
+                k.add(makeDoorBlocker(floorCoord.add(this.sizeX, Math.floor(this.sizeY / 2)).scale(TILE_WIDTH, TILE_HEIGHT)))
+            }
+        },
+        unblockDoors() {
+            k.destroyAll("door_blocker")
+        },
+        initMonsters(amount) {
+            this.monstersCount = amount
+            initMonstersCs(k, this, amount, () => {
+                this.decrementMonster()
+            })
+        },
+        decrementMonster() {
+            this.monstersCount--
+            if (this.monstersCount <= 0) {
+                this.unblockDoors()
+            }
+        },
     }
 }
 
@@ -266,21 +292,7 @@ const makeRoom = (k, sizeX, sizeY, roomCoordv, enterCallback, doorsOpt) => {
     const room = k.make([
         k.pos(roomPos),
         k.offscreen({ hide: true }),
-        {
-            blockDoors: () => blockDoors(k, sizeX, sizeY, roomCoordv, doorsOpt),
-            unblockDoors: () => k.get("door_blocker").forEach(blocker => k.destroy(blocker)),
-            initMonsters: amount => {
-                roomInfo.monstersCount = amount
-                const killCallback = () => {
-                    roomInfo.monstersCount--
-                    // console.log(roomInfo.monstersCount)
-                    if (roomInfo.monstersCount <= 0) {
-                        k.get("door_blocker").forEach(blocker => k.destroy(blocker))
-                    }
-                }
-                initMonsters(k, sizeX, sizeY, roomCoordv, amount, killCallback)
-            },
-        },
+        roomComp(k, sizeX, sizeY, roomCoordv, doorsOpt),
     ])
     drawFloorTiles(k, room, sizeX, sizeY)
     drawWallUp(k, room, sizeX, sizeY, doorsOpt.up)

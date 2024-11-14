@@ -1,12 +1,6 @@
 import { TILE_HEIGHT, TILE_WIDTH } from "./gameConstant"
 import makeRoom, { DOOR_DOWN, DOOR_RIGHT, DOOR_UP, getRoomCenterWorldPos } from "./room"
 
-const makeWarningMark = (k, posVec) => k.make([
-    k.pos(posVec),
-    k.sprite("warning_rect", { anim: "dance" }),
-    k.anchor("center"),
-])
-
 const enterRight = (k, coordX, coordY, roomInfos, newRoomCallback, hasMonsters) => {
     const x = Math.floor(roomInfos[coordY][coordX].sizeX / 2) * TILE_WIDTH * -1
     newRoomCallback({
@@ -41,6 +35,14 @@ const enterDown = (k, coordX, coordY, roomInfos, newRoomCallback, hasMonsters) =
         playerDestPos: getRoomCenterWorldPos(k, k.vec2(coordX, coordY)).add(0, y),
         hasMonsters: hasMonsters,
     })
+}
+
+const houseComp = (k, startCoordX, startCoordY) => {
+    return {
+        rooms: [],
+        coordX: startCoordX,
+        coordY: startCoordY,
+    }
 }
 
 const makeRooms = (k, startCoordX, startCoordY, newRoomCallback) => {
