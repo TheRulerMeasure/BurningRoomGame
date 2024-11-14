@@ -7,45 +7,40 @@ const makeWarningMark = (k, posVec) => k.make([
     k.anchor("center"),
 ])
 
-const enterRight = (k, coordX, coordY, roomInfos, newRoomCallback) => {
+const enterRight = (k, coordX, coordY, roomInfos, newRoomCallback, hasMonsters) => {
     const x = Math.floor(roomInfos[coordY][coordX].sizeX / 2) * TILE_WIDTH * -1
     newRoomCallback({
         camDestPos: getRoomCenterWorldPos(k, k.vec2(coordX, coordY)).add(0, TILE_HEIGHT * -0.5),
         playerDestPos: getRoomCenterWorldPos(k, k.vec2(coordX, coordY)).add(x, 0),
+        hasMonsters: hasMonsters,
     })
 }
 
-const enterLeft = (k, coordX, coordY, roomInfos, newRoomCallback) => {
+const enterLeft = (k, coordX, coordY, roomInfos, newRoomCallback, hasMonsters) => {
     const x = Math.floor(roomInfos[coordY][coordX].sizeX / 2) * TILE_WIDTH
     newRoomCallback({
         camDestPos: getRoomCenterWorldPos(k, k.vec2(coordX, coordY)).add(0, TILE_HEIGHT * -0.5),
         playerDestPos: getRoomCenterWorldPos(k, k.vec2(coordX, coordY)).add(x, 0),
+        hasMonsters: hasMonsters,
     })
 }
 
-const enterUp = (k, coordX, coordY, roomInfos, newRoomCallback) => {
+const enterUp = (k, coordX, coordY, roomInfos, newRoomCallback, hasMonsters) => {
     const y = Math.floor(roomInfos[coordY][coordX].sizeY / 2) * TILE_HEIGHT
     newRoomCallback({
         camDestPos: getRoomCenterWorldPos(k, k.vec2(coordX, coordY)).add(0, TILE_HEIGHT * -0.5),
         playerDestPos: getRoomCenterWorldPos(k, k.vec2(coordX, coordY)).add(0, y),
+        hasMonsters: hasMonsters,
     })
 }
 
-const enterDown = (k, coordX, coordY, roomInfos, newRoomCallback) => {
+const enterDown = (k, coordX, coordY, roomInfos, newRoomCallback, hasMonsters) => {
     const y = Math.floor(roomInfos[coordY][coordX].sizeY / 2) * TILE_HEIGHT * -1
     newRoomCallback({
         camDestPos: getRoomCenterWorldPos(k, k.vec2(coordX, coordY)).add(0, TILE_HEIGHT * -0.5),
         playerDestPos: getRoomCenterWorldPos(k, k.vec2(coordX, coordY)).add(0, y),
+        hasMonsters: hasMonsters,
     })
-}
-
-const checkRoom = (coordX, coordY, maxColumn, rooms, monstersCount) => {
-    if (monstersCount <= 0) {
-        return
-    }
-    const index = (coordX % maxColumn) + (coordY * maxColumn)
-    rooms[index].blockDoors()
-    rooms[index].initMonsters(monstersCount)
 }
 
 const makeRooms = (k, startCoordX, startCoordY, newRoomCallback) => {
@@ -79,25 +74,29 @@ const makeRooms = (k, startCoordX, startCoordY, newRoomCallback) => {
         switch (dir) {
             case DOOR_RIGHT:
                 coordX += 1
-                enterRight(k, coordX, coordY, roomInfos, newRoomCallback)
+                enterRight(k, coordX, coordY, roomInfos, newRoomCallback, monsterRooms[coordY][coordX] > 0)
                 break
             case DOOR_UP:
                 coordY -= 1
-                enterUp(k, coordX, coordY, roomInfos, newRoomCallback)
+                enterUp(k, coordX, coordY, roomInfos, newRoomCallback, monsterRooms[coordY][coordX] > 0)
                 break
             case DOOR_DOWN:
                 coordY += 1
-                enterDown(k, coordX, coordY, roomInfos, newRoomCallback)
+                enterDown(k, coordX, coordY, roomInfos, newRoomCallback, monsterRooms[coordY][coordX] > 0)
                 break
             default:
                 coordX -= 1
-                enterLeft(k, coordX, coordY, roomInfos, newRoomCallback)
+                enterLeft(k, coordX, coordY, roomInfos, newRoomCallback, monsterRooms[coordY][coordX] > 0)
                 break
         }
         if (monsterRooms[coordY][coordX] > 0) {
             const index = (coordX % roomMaxColumn) + (coordY * roomMaxColumn)
-            rooms[index].blockDoors()
-            rooms[index].initMonsters(monsterRooms[coordY][coordX])
+            k.tween(0, 1, 0.7, _ => {}).onEnd(() => {
+                rooms[index].blockDoors()
+            })
+            k.tween(0, 1, 1.5, _ => {}).onEnd(() => {
+                rooms[index].initMonsters(monsterRooms[coordY][coordX])
+            })
         }
     }
     for (let y = 0; y < roomInfos.length; y++) {

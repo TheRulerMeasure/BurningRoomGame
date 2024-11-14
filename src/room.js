@@ -213,21 +213,23 @@ const makeWallRight = (k, room, sizeX, sizeY, hasDoor, enterCallback) => {
     }
 }
 
-const initMonsters = (k, sizeX, sizeY, roomCoordv, amount) => {
+const initMonsters = (k, sizeX, sizeY, roomCoordv, amount, killCallback) => {
     const floorCoord = getFloorCoord(k, sizeX, sizeY)
     const posVec = getRoomWorldCoord(k, roomCoordv).add(floorCoord.scale(TILE_WIDTH, TILE_HEIGHT))
     for (let i = 0; i < amount; i++) {
         const offsetX = k.rand() * (TILE_WIDTH * sizeX - 64)
         const offsetY = k.rand() * (TILE_HEIGHT * sizeY - 64)
-        k.add([
+        const warningRect = k.add([
             k.pos(posVec.add(32 + offsetX, 32 + offsetY)),
             k.sprite("warning_rect", { anim: "dance" }),
             k.anchor("center"),
             k.layer("foreground"),
         ])
-        console.log("spawned a monster")
-        k.tween(0, 1, 1, v => {}).onEnd(() => {
-            k.add(makeSlimea(k, posVec.add(32 + offsetX, 32 + offsetY)))
+        k.tween(0, 1, 1.12, _ => {}).onEnd(() => {
+            const monster = makeSlimea(k, posVec.add(32 + offsetX, 32 + offsetY))
+            k.add(monster)
+            monster.onDied(killCallback)
+            k.destroy(warningRect)
         })
     }
 }
@@ -257,6 +259,9 @@ const blockDoors = (k, sizeX, sizeY, roomCoordv, doorsOpt) => {
 }
 
 const makeRoom = (k, sizeX, sizeY, roomCoordv, enterCallback, doorsOpt) => {
+    const roomInfo = {
+        monstersCount: 0,
+    }
     const roomPos = getRoomWorldCoord(k, roomCoordv)
     const room = k.make([
         k.pos(roomPos),
@@ -264,7 +269,17 @@ const makeRoom = (k, sizeX, sizeY, roomCoordv, enterCallback, doorsOpt) => {
         {
             blockDoors: () => blockDoors(k, sizeX, sizeY, roomCoordv, doorsOpt),
             unblockDoors: () => k.get("door_blocker").forEach(blocker => k.destroy(blocker)),
-            initMonsters: amount => initMonsters(k, sizeX, sizeY, roomCoordv, amount),
+            initMonsters: amount => {
+                roomInfo.monstersCount = amount
+                const killCallback = () => {
+                    roomInfo.monstersCount--
+                    // console.log(roomInfo.monstersCount)
+                    if (roomInfo.monstersCount <= 0) {
+                        k.get("door_blocker").forEach(blocker => k.destroy(blocker))
+                    }
+                }
+                initMonsters(k, sizeX, sizeY, roomCoordv, amount, killCallback)
+            },
         },
     ])
     drawFloorTiles(k, room, sizeX, sizeY)

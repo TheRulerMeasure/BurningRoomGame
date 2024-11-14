@@ -31,9 +31,9 @@ const startLoad = (k, addProgress) => {
         sliceX: 5,
         sliceY: 1,
         anims: {
-            idle: { from: 0, to: 1, speed: 17, loop: true },
-            spawn: { from: 2, to: 4, speed: 15 },
-            die: { from: 4, to: 2, speed: 15 },
+            idle: { from: 0, to: 1, speed: 11, loop: true },
+            spawn: { from: 2, to: 4, speed: 9 },
+            die: { from: 4, to: 2, speed: 8.5 },
         },
     }).onFinish(addProgress) // 7
     k.loadFont("pixel_font", "fonts/alpha-beta/alpha-beta-brk.regular.ttf").onFinish(addProgress) // 8

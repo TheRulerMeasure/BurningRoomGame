@@ -47,7 +47,8 @@ const updateEnteringTele = (k, gAuto, dt) => {
 
 const updateLeavingTele = (k, gAuto, dt) => {
     gAuto.transitionTime += dt
-    if (gAuto.transitionTime >= TeleportConst.EXIT_DURATION) {
+    const exitDuration = TeleportConst.EXIT_DURATION + (gAuto.getDestInfo().hasMonsters ? 0.5 : 0)
+    if (gAuto.transitionTime >= exitDuration) {
         gAuto.transitionTime = 0.0
         k.get("mover").forEach(mover => mover.moveProcessing = true)
         gAuto.freeDestInfo()
