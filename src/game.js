@@ -3,7 +3,7 @@ import { getWorldPosFromCellvCenter, TILE_HEIGHT } from "./gameConstant"
 import radialShade from "./shaders/radialshade"
 import makeFader, { faderEvent } from "./gameFader"
 import { addDoorSystem, getRoomCenterWorldPos } from "./room"
-import makeRooms from "./house"
+import makeHouse from "./house"
 import makeGameAuto, { addGameAutoSystem } from "./gameAuto"
 import { addBulletSystem } from "./bullet"
 import { addSlimeaSystem } from "./slimea"
@@ -43,7 +43,6 @@ const ready = (k) => {
     k.layers(["background", "game", "foreground"], "game")
 
     addGameAutoSystem(k)
-    // addMoverSystem(k)
     addDoorSystem(k)
     addBulletSystem(k)
     faderEvent.onUpdate(k)
@@ -54,15 +53,22 @@ const ready = (k) => {
 
     const gameAuto = k.add(makeGameAuto(k))
 
-    const rooms = makeRooms(k, 0, 0, gameAuto.newRoomCallback)
-    rooms.forEach(room => k.add(room))
+    const house = k.add(makeHouse(k, 2, 0))
 
-    const playerPos = getWorldPosFromCellvCenter(k, k.vec2(5, 5))
-    k.add(makePlayer(k, playerPos))
-    k.camPos(getRoomCenterWorldPos(k, k.vec2(0, 0)).add(0, TILE_HEIGHT * -0.5))
+    const evTeleport = [
+        gameAuto.on("teleported", () => house.putNewRoom()),
+        gameAuto.on("found_monsters", monsters => house.putMonsters(monsters)),
+    ]
+    house.onDestroy(() => evTeleport.forEach(ev => ev.cancel()))
 
-    // test
-    // rooms[2].blockDoors()
+    house.on("entered_new_room", destPos => gameAuto.mobEnteredNewRoom(destPos))
+
+    house.initRoom()
+    // rooms.forEach(room => k.add(room))
+
+    // const playerPos = getWorldPosFromCellvCenter(k, k.vec2(5, 5))
+    // k.add(makePlayer(k, playerPos))
+    // k.camPos(getRoomCenterWorldPos(k, k.vec2(0, 0)).add(0, TILE_HEIGHT * -0.5))
 }
 
 const gameRun = k => {

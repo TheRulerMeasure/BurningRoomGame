@@ -30,6 +30,4 @@ const k = kaplay({
     plugins: [ gamePlugin ],
 })
 
-// k.add([]).trigger("", ...)
-
 k.run()

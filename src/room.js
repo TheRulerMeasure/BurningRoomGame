@@ -35,14 +35,15 @@ const makeTile = (k, pos, frame) => k.make([
     k.layer("background"),
 ])
 
-const makeDoor = (k, dir, cb) => k.make([
+const makeDoor = (k, dir) => k.make([
     k.pos(TILE_WIDTH * 0.25, TILE_HEIGHT * 0.25),
     k.rect(TILE_WIDTH * 0.5, TILE_HEIGHT * 0.5),
     k.opacity(0),
     k.area(),
     "door",
     {
-        mobEntered: () => cb(dir),
+        direction: dir,
+        // mobEntered: () => cb(dir),
     },
 ])
 
@@ -131,12 +132,14 @@ const drawWallDown = (k, room, sizeX, sizeY, hasDoor) => {
     room.add(wallObj)
 }
 
-const makeWallUp = (k, room, sizeX, sizeY, hasDoor, enterCallback) => {
+const makeWallUp = (k, room, sizeX, sizeY, hasDoor) => {
     const floorCoord = getFloorCoord(k, sizeX, sizeY)
     if (hasDoor) {
         const doorPos = k.vec2(floorCoord.x + Math.floor(sizeX / 2), floorCoord.y - 1).scale(TILE_WIDTH, TILE_HEIGHT)
         const doorTile = makeTile(k, doorPos, 1)
-        doorTile.add(makeDoor(k, DOOR_UP, enterCallback))
+        const doorObj = makeDoor(k, DOOR_UP)
+        doorObj.on("mob_entered", dir => room.trigger("mob_entered", dir))
+        doorTile.add(doorObj)
         room.add(doorTile)
 
         const rectWidth = (Math.floor(sizeX / 2)) * TILE_WIDTH
@@ -152,12 +155,13 @@ const makeWallUp = (k, room, sizeX, sizeY, hasDoor, enterCallback) => {
     }
 }
 
-const makeWallDown = (k, room, sizeX, sizeY, hasDoor, enterCallback) => {
+const makeWallDown = (k, room, sizeX, sizeY, hasDoor) => {
     const floorCoord = getFloorCoord(k, sizeX, sizeY)
     if (hasDoor) {
         const tilePos = k.vec2(floorCoord.x + Math.floor(sizeX / 2), floorCoord.y + sizeY).scale(TILE_WIDTH, TILE_HEIGHT)
         const doorTile = makeTile(k, tilePos, 4)
-        doorTile.add(makeDoor(k, DOOR_DOWN, enterCallback))
+        const doorObj = doorTile.add(makeDoor(k, DOOR_DOWN))
+        doorObj.on("mob_entered", dir => room.trigger("mob_entered", dir))
         room.add(doorTile)
 
         const rectWidth = (Math.floor(sizeX / 2)) * TILE_WIDTH
@@ -173,11 +177,12 @@ const makeWallDown = (k, room, sizeX, sizeY, hasDoor, enterCallback) => {
     }
 }
 
-const makeWallLeft = (k, room, sizeX, sizeY, hasDoor, enterCallback) => {
+const makeWallLeft = (k, room, sizeX, sizeY, hasDoor) => {
     const floorCoord = getFloorCoord(k, sizeX, sizeY)
     if (hasDoor) {
         const doorTile = makeTile(k, k.vec2(floorCoord.x - 1, floorCoord.y + Math.floor(sizeY / 2)).scale(TILE_WIDTH, TILE_HEIGHT), 5)
-        doorTile.add(makeDoor(k, DOOR_LEFT, enterCallback))
+        const doorObj = doorTile.add(makeDoor(k, DOOR_LEFT))
+        doorObj.on("mob_entered", dir => room.trigger("mob_entered", dir))
         room.add(doorTile)
 
         const rectHeight = (Math.floor(sizeY / 2)) * TILE_HEIGHT
@@ -193,11 +198,12 @@ const makeWallLeft = (k, room, sizeX, sizeY, hasDoor, enterCallback) => {
     }
 }
 
-const makeWallRight = (k, room, sizeX, sizeY, hasDoor, enterCallback) => {
+const makeWallRight = (k, room, sizeX, sizeY, hasDoor) => {
     const floorCoord = getFloorCoord(k, sizeX, sizeY)
     if (hasDoor) {
         const doorTile = makeTile(k, k.vec2(floorCoord.x + sizeX, floorCoord.y + Math.floor(sizeY / 2)).scale(TILE_WIDTH, TILE_HEIGHT), 4)
-        doorTile.add(makeDoor(k, DOOR_RIGHT, enterCallback))
+        const doorObj = doorTile.add(makeDoor(k, DOOR_RIGHT))
+        doorObj.on("mob_entered", dir => room.trigger("mob_entered", dir))
         room.add(doorTile)
 
         const rectHeight = (Math.floor(sizeY / 2)) * TILE_HEIGHT
@@ -243,6 +249,7 @@ const roomComp = (k, sizeX, sizeY, roomCoordv, doorsOpt) => {
         roomCoordv: roomCoordv,
         doorsOpt: doorsOpt,
         monstersCount: 0,
+
         blockDoors() {
             const roomPos = getRoomWorldCoord(k, this.roomCoordv)
             const makeDoorBlocker = posVec => k.make([
@@ -266,28 +273,29 @@ const roomComp = (k, sizeX, sizeY, roomCoordv, doorsOpt) => {
                 k.add(makeDoorBlocker(floorCoord.add(this.sizeX, Math.floor(this.sizeY / 2)).scale(TILE_WIDTH, TILE_HEIGHT)))
             }
         },
+
         unblockDoors() {
             k.destroyAll("door_blocker")
         },
+
         initMonsters(amount) {
             this.monstersCount = amount
             initMonstersCs(k, this, amount, () => {
                 this.decrementMonster()
             })
         },
+
         decrementMonster() {
             this.monstersCount--
             if (this.monstersCount <= 0) {
                 this.unblockDoors()
             }
         },
+
     }
 }
 
-const makeRoom = (k, sizeX, sizeY, roomCoordv, enterCallback, doorsOpt) => {
-    const roomInfo = {
-        monstersCount: 0,
-    }
+const makeRoom = (k, sizeX, sizeY, roomCoordv, doorsOpt) => {
     const roomPos = getRoomWorldCoord(k, roomCoordv)
     const room = k.make([
         k.pos(roomPos),
@@ -296,17 +304,17 @@ const makeRoom = (k, sizeX, sizeY, roomCoordv, enterCallback, doorsOpt) => {
     ])
     drawFloorTiles(k, room, sizeX, sizeY)
     drawWallUp(k, room, sizeX, sizeY, doorsOpt.up)
-    makeWallUp(k, room, sizeX, sizeY, doorsOpt.up, enterCallback)
+    makeWallUp(k, room, sizeX, sizeY, doorsOpt.up)
     drawWallDown(k, room, sizeX, sizeY, doorsOpt.down)
-    makeWallDown(k, room, sizeX, sizeY, doorsOpt.down, enterCallback)
-    makeWallLeft(k, room, sizeX, sizeY, doorsOpt.left, enterCallback)
-    makeWallRight(k, room, sizeX, sizeY, doorsOpt.right, enterCallback)
+    makeWallDown(k, room, sizeX, sizeY, doorsOpt.down)
+    makeWallLeft(k, room, sizeX, sizeY, doorsOpt.left)
+    makeWallRight(k, room, sizeX, sizeY, doorsOpt.right)
     return room
 }
 
 const addDoorSystem = (k) => {
     k.onCollide("player", "door", (player, door, col) => {
-        door.mobEntered()
+        door.trigger("mob_entered", door.direction)
     })
 }
 

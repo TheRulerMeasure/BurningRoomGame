@@ -15,9 +15,10 @@ const makeGameAuto = (k) => {
         "game_auto",
         {
             currentState: GameStates.NORMAL,
-            newRoomCallback: (destInfo) => room.destInfo = destInfo,
+            // newRoomCallback: (destInfo) => room.destInfo = destInfo,
             getDestInfo: () => room.destInfo,
             freeDestInfo: () => room.destInfo = null,
+            mobEnteredNewRoom: destInfo => room.destInfo = destInfo,
             transitionTime: 0.0,
         },
     ])
@@ -40,6 +41,7 @@ const updateEnteringTele = (k, gAuto, dt) => {
         k.get("player").forEach(p => p.pos = gAuto.getDestInfo().playerDestPos)
         k.get("game_fader").forEach(fader => fader.faderIn())
         k.camPos(gAuto.getDestInfo().camDestPos)
+        gAuto.trigger("teleported")
         return GameStates.LEAVING_TELEPORTER
     }
     return -1
@@ -47,10 +49,13 @@ const updateEnteringTele = (k, gAuto, dt) => {
 
 const updateLeavingTele = (k, gAuto, dt) => {
     gAuto.transitionTime += dt
-    const exitDuration = TeleportConst.EXIT_DURATION + (gAuto.getDestInfo().hasMonsters ? 0.5 : 0)
+    const exitDuration = TeleportConst.EXIT_DURATION + (gAuto.getDestInfo().monsters ? 0.5 : 0)
     if (gAuto.transitionTime >= exitDuration) {
         gAuto.transitionTime = 0.0
         k.get("mover").forEach(mover => mover.moveProcessing = true)
+        if (gAuto.getDestInfo().monsters) {
+            gAuto.trigger("found_monsters", gAuto.getDestInfo().monsters)
+        }
         gAuto.freeDestInfo()
         return GameStates.NORMAL
     }
