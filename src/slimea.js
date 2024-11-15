@@ -10,6 +10,15 @@ const SlimeaStates = {
     SPAWNING:   6,
 }
 
+const hitboxComp = () => {
+    return {
+        id: "hitbox",
+        takeDamage(dmg) {
+            this.trigger("takenDamage", dmg)
+        },
+    }
+}
+
 const getWaypointAroundPos = (k, slimeaPos, plPos) => {
     let angDeg = slimeaPos.sub(plPos).unit().angle()
     angDeg += k.rand() * 45 * (k.rand() < 0.5 ? -1 : 1)
@@ -20,9 +29,9 @@ const getWaypointAroundPos = (k, slimeaPos, plPos) => {
 }
 
 const onSlimeaEnterAttacking = (k, slimea) => {
-    slimea.acceleration = slimea.attackMoverComp.acceleration
-    slimea.maxSpeed = slimea.attackMoverComp.maxSpeed
-    slimea.friction = slimea.attackMoverComp.friction
+    slimea.movementInfo.acceleration = slimea.attackMoverComp.acceleration
+    slimea.movementInfo.maxSpeed = slimea.attackMoverComp.maxSpeed
+    slimea.movementInfo.friction = slimea.attackMoverComp.friction
     let attackDir = k.vec2(1, 0)
     const players = k.get("player")
     if (players.length <= 0) {
@@ -31,37 +40,37 @@ const onSlimeaEnterAttacking = (k, slimea) => {
         attackDir = players[0].pos.sub(slimea.pos).unit()
         slimea.attackDir = attackDir
     }
-    slimea.setSpriteFlip(slimea.attackDir.x < 0)
+    slimea.trigger("sprite_flip", slimea.attackDir.x < 0)
 }
 
 const onSlimeaLeaveAttacking = (k, slimea) => {
-    slimea.acceleration = slimea.normalMoverComp.acceleration
-    slimea.maxSpeed = slimea.normalMoverComp.maxSpeed
-    slimea.friction = slimea.normalMoverComp.friction
+    slimea.movementInfo.acceleration = slimea.normalMoverComp.acceleration
+    slimea.movementInfo.maxSpeed = slimea.normalMoverComp.maxSpeed
+    slimea.movementInfo.friction = slimea.normalMoverComp.friction
 }
 
 const onSlimeaEnterRecovering = (k, slimea) => {
-    slimea.acceleration = slimea.attackMoverComp.acceleration
-    slimea.maxSpeed = slimea.attackMoverComp.maxSpeed
-    slimea.friction = slimea.attackMoverComp.friction
+    slimea.movementInfo.acceleration = slimea.attackMoverComp.acceleration
+    slimea.movementInfo.maxSpeed = slimea.attackMoverComp.maxSpeed
+    slimea.movementInfo.friction = slimea.attackMoverComp.friction
 }
 
 const onSlimeaLeaveRecovering = (k, slimea) => {
-    slimea.acceleration = slimea.normalMoverComp.acceleration
-    slimea.maxSpeed = slimea.normalMoverComp.maxSpeed
-    slimea.friction = slimea.normalMoverComp.friction
+    slimea.movementInfo.acceleration = slimea.normalMoverComp.acceleration
+    slimea.movementInfo.maxSpeed = slimea.normalMoverComp.maxSpeed
+    slimea.movementInfo.friction = slimea.normalMoverComp.friction
 }
 
 const onSlimeaEnterDying = (k, slimea) => {
     slimea.trigger("died")
-    slimea.spritePlay("die")
+    slimea.trigger("sprite_play", "die")
 }
 
 const onSlimeaEnterState = (k, slimea, newState) => {
     if (newState == SlimeaStates.SPAWNING) {
-        slimea.spritePlay("spawn")
+        slimea.trigger("sprite_play", "spawn")
     } else if (newState == SlimeaStates.IDLING) {
-        slimea.spritePlay("idle")
+        slimea.trigger("sprite_play", "idle")
     } else if (newState == SlimeaStates.ATTACKING) {
         onSlimeaEnterAttacking(k, slimea)
     } else if (newState == SlimeaStates.RECOVERING) {
@@ -105,7 +114,7 @@ const updateSlimeaChasing = (k, slimea) => {
     }
     const direction = players[0].pos.sub(slimea.pos).unit()
     slimea.motionAxis = direction
-    slimea.setSpriteFlip(slimea.motionAxis.x < 0)
+    slimea.trigger("sprite_flip", slimea.attackDir.x < 0)
     if (slimea.pos.dist(players[0].pos) < 198) {
         return SlimeaStates.DANCING
     }
@@ -129,7 +138,7 @@ const updateSlimeaDancing = (k, slimea) => {
         slimea.currentDanceWaypoint = getWaypointAroundPos(k, slimea.pos, players[0].pos)
     }
     slimea.motionAxis = slimea.currentDanceWaypoint.sub(slimea.pos).unit()
-    slimea.setSpriteFlip(slimea.motionAxis.x < 0)
+    slimea.trigger("sprite_flip", slimea.attackDir.x < 0)
     if (slimea.stateTimeElapse >= 2.1) {
         return SlimeaStates.ATTACKING
     }
@@ -215,40 +224,51 @@ const onUpdateSystem = k => {
     })
 }
 
+const slimeaComp = k => {
+    return {
+        id: "slimeaComp",
+        spawned: false,
+        normalMoverComp: createMoverComp(1245, 109, 960),
+        attackMoverComp: createMoverComp(3359, 500, 847),
+        currentState: SlimeaStates.IDLING,
+        stateTimeElapse: 0.0,
+        danceTimeElapse: 0.0,
+        currentDanceWaypoint: k.vec2(100, 100),
+        attackDir: k.vec2(),
+    }
+}
+
 const makeSlimea = (k, posVec) => {
     const comp = createMoverComp(1245, 109, 960)
     const slimea = makeMover(k, posVec, 32, 32, "slimea", comp)
+    slimea.use(slimeaComp(k))
     slimea.use(k.health(10))
+
     const hitbox = k.make([
         k.pos(),
         k.rect(64, 64),
         k.area(),
         k.anchor("center"),
         k.opacity(0),
+        hitboxComp(),
         "team2_hitbox",
-        {
-            takeDamage: (dmg, direction) => {
-                slimea.hurt(dmg)
-            },
-        },
     ])
+
+    hitbox.on("takenDamage", dmg => slimea.hurt(dmg))
+
     slimea.add(hitbox)
+
     const slimeSp = k.make([
         k.pos(),
         k.sprite("slime", { anim: "idle" }),
         k.anchor("center"),
     ])
+
+    slimea.on("sprite_play", animName => slimeSp.play(animName))
+    slimea.on("sprite_flip", flip => slimeSp.flipX = flip)
+
     slimea.add(slimeSp)
-    slimea.normalMoverComp = comp
-    slimea.attackMoverComp = createMoverComp(3359, 500, 847)
-    slimea.currentState = SlimeaStates.IDLING
-    slimea.stateTimeElapse = 0.0
-    slimea.danceTimeElapse = 0.0
-    slimea.currentDanceWaypoint = k.vec2()
-    slimea.atackDir = k.vec2()
-    slimea.spawned = false
-    slimea.spritePlay = animName => slimeSp.play(animName)
-    slimea.setSpriteFlip = flip => slimeSp.flipX = flip
+
     return slimea
 }
 

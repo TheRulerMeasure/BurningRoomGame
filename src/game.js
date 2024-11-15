@@ -1,5 +1,4 @@
 import makePlayer, { addPlayerSystem } from "./mob"
-import { addMoverSystem } from "./mover"
 import { getWorldPosFromCellvCenter, TILE_HEIGHT } from "./gameConstant"
 import radialShade from "./shaders/radialshade"
 import makeFader, { faderEvent } from "./gameFader"
@@ -44,7 +43,7 @@ const ready = (k) => {
     k.layers(["background", "game", "foreground"], "game")
 
     addGameAutoSystem(k)
-    addMoverSystem(k)
+    // addMoverSystem(k)
     addDoorSystem(k)
     addBulletSystem(k)
     faderEvent.onUpdate(k)
