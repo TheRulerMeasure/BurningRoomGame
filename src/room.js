@@ -47,6 +47,15 @@ const makeDoor = (k, dir) => k.make([
     },
 ])
 
+const makeStairs = (k, pos) => k.make([
+    k.pos(pos),
+    k.sprite("stairs"),
+    k.anchor("center"),
+    k.area(),
+    k.layer("background"),
+    "level_stairs",
+])
+
 const makeCollisionRect = (k, pos, width, height) => k.make([
     k.pos(pos),
     k.rect(width, height),
@@ -320,7 +329,7 @@ const roomComp = (k, sizeX, sizeY, roomCoordv, doorsOpt) => {
     }
 }
 
-const makeRoom = (k, sizeX, sizeY, roomCoordv, doorsOpt) => {
+const makeRoom = (k, sizeX, sizeY, roomCoordv, doorsOpt, hasStairs) => {
     const roomPos = getRoomWorldCoord(k, roomCoordv)
     const room = k.make([
         k.pos(roomPos),
@@ -328,6 +337,11 @@ const makeRoom = (k, sizeX, sizeY, roomCoordv, doorsOpt) => {
         roomComp(k, sizeX, sizeY, roomCoordv, doorsOpt),
     ])
     drawFloorTiles(k, room, sizeX, sizeY)
+    if (hasStairs) {
+        const posVec = k.vec2(MAX_ROOM_WIDTH * TILE_WIDTH * 0.5, MAX_ROOM_HEIGHT * TILE_HEIGHT * 0.5)
+        const stairs = room.add(makeStairs(k, posVec))
+        stairs.on("mob_entered_stairs", () => room.trigger("mob_entered_stairs"))
+    }
     drawWallUp(k, room, sizeX, sizeY, doorsOpt.up)
     makeWallUp(k, room, sizeX, sizeY, doorsOpt.up)
     // drawWallDown(k, room, sizeX, sizeY, doorsOpt.down)
@@ -337,13 +351,19 @@ const makeRoom = (k, sizeX, sizeY, roomCoordv, doorsOpt) => {
     return room
 }
 
-const addDoorSystem = (k) => {
+const addDoorSystem = k => {
     k.onCollide("player", "door", (player, door, col) => {
         door.trigger("mob_entered", door.direction)
+    })
+}
+
+const addLevelStairsSystem = k => {
+    k.onCollide("player", "level_stairs", (player, lvlStairs, col) => {
+        lvlStairs.trigger("mob_entered_stairs")
     })
 }
 
 export default makeRoom
 export { MAX_FLOOR_WIDTH, MAX_FLOOR_HEIGHT, getRoomCenterWorldPos }
 export { DOOR_LEFT, DOOR_RIGHT, DOOR_UP, DOOR_DOWN }
-export { addDoorSystem }
+export { addDoorSystem , addLevelStairsSystem }

@@ -1,14 +1,14 @@
 import { addPlayerSystem } from "./mob"
 import radialShade from "./shaders/radialshade"
 import makeFader, { faderEvent } from "./gameFader"
-import { addDoorSystem } from "./room"
+import { addDoorSystem, addLevelStairsSystem } from "./room"
 import makeHouse from "./house"
 import makeGameAuto, { addGameAutoSystem } from "./gameAuto"
 import { addBulletSystem } from "./bullet"
 import { addSlimeaSystem } from "./slimea"
 import level from "./levels/levela"
 
-const MAX_ASSETS_COUNT = 9
+const MAX_ASSETS_COUNT = 10
 
 const startLoad = (k, addProgress) => {
     k.loadSprite("ft_tile", "textures/tilemaps/ft_tile_sheet.png", {
@@ -35,8 +35,9 @@ const startLoad = (k, addProgress) => {
             die: { from: 4, to: 2, speed: 8.5 },
         },
     }).onFinish(addProgress) // 7
-    k.loadFont("pixel_font", "fonts/alpha-beta/alpha-beta-brk.regular.ttf").onFinish(addProgress) // 8
-    k.loadShader("radial_shade", null, radialShade).onFinish(addProgress) // 9
+    k.loadSprite("stairs", "textures/doors/stair_down.png").onFinish(addProgress) // 8
+    k.loadFont("pixel_font", "fonts/alpha-beta/alpha-beta-brk.regular.ttf").onFinish(addProgress) // 9
+    k.loadShader("radial_shade", null, radialShade).onFinish(addProgress) // 10
 }
 
 const ready = (k) => {
@@ -44,6 +45,7 @@ const ready = (k) => {
 
     addGameAutoSystem(k)
     addDoorSystem(k)
+    addLevelStairsSystem(k)
     addBulletSystem(k)
     faderEvent.onUpdate(k)
     addPlayerSystem(k)
@@ -56,13 +58,18 @@ const ready = (k) => {
     const house = k.add(makeHouse(k, 0, 0))
     house.loadRooms(level)
 
-    const evTeleport = [
+    const gameAutoEvents = [
         gameAuto.on("teleported", () => house.putNewRoom()),
         gameAuto.on("found_monsters", monsters => house.putMonsters(monsters)),
+        gameAuto.on("give_new_level", levelData => {
+            house.loadRooms(levelData)
+            house.putNewRoom()
+        })
     ]
-    house.onDestroy(() => evTeleport.forEach(ev => ev.cancel()))
+    house.onDestroy(() => gameAutoEvents.forEach(ev => ev.cancel()))
 
     house.on("entered_new_room", destPos => gameAuto.mobEnteredNewRoom(destPos))
+    house.on("entered_stairs", () => gameAuto.mobEnteredStairs())
 
     house.initRoom()
 }

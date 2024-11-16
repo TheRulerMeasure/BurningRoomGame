@@ -21,13 +21,12 @@ const getDoorsFromSymbol = charSymbol => {
 
 const getRoomData = (lvlData, x, y) => {
     const s = lvlData.roomSizes[y][x].split("x")
-    // const doors = getDoorsFromSymbol(lvlData.doors[y][x])
-    // const monsters = lvlData.monsters[y][x]
     return {
         sizeX: Number(s[0]),
         sizeY: Number(s[1]),
         doors: lvlData.doors ? getDoorsFromSymbol(lvlData.doors[y].at(x)) : null,
         monsters: lvlData.monsters ? lvlData.monsters[y][x] : null,
+        hasStairs: (x == lvlData.endCoord.x) && (y == lvlData.endCoord.y),
     }
 }
 

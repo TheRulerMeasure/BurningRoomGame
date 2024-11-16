@@ -57,7 +57,6 @@ const houseComp = (k, startCoordX, startCoordY) => {
 
         loadRooms(lvlData) {
             this.roomInfos = packLevel(lvlData)
-            // console.log(this.roomInfos)
             this.coordX = lvlData.startCoord.x
             this.coordY = lvlData.startCoord.y
         },
@@ -65,7 +64,11 @@ const houseComp = (k, startCoordX, startCoordY) => {
         initRoom() {
             const roomObj = this.add(this.makeRoomAtCoord(this.coordX, this.coordY))
             const evEnteredDoor = roomObj.on("mob_entered", dir => this.movedToNewRoom(dir))
-            roomObj.onDestroy(() => evEnteredDoor.cancel())
+            const evEnteredStairs = roomObj.on("mob_entered_stairs", () => this.enterTheStairs())
+            roomObj.onDestroy(() => {
+                evEnteredDoor.cancel()
+                evEnteredStairs.cancel()
+            })
 
             this.currentRoomObj = roomObj
 
@@ -73,6 +76,10 @@ const houseComp = (k, startCoordX, startCoordY) => {
             k.add(makePlayer(k, posVec))
 
             k.camPos(getRoomCenterWorldPos(k, k.vec2(this.coordX, this.coordY)).add(0, TILE_HEIGHT * -0.5))
+        },
+
+        enterTheStairs() {
+            this.trigger("entered_stairs")
         },
 
         movedToNewRoom(dir) {
@@ -94,14 +101,18 @@ const houseComp = (k, startCoordX, startCoordY) => {
 
         makeRoomAtCoord(x, y) {
             const roomInfo = this.roomInfos[y][x]
-            return makeRoom(k, roomInfo.sizeX, roomInfo.sizeY, k.vec2(x, y), roomInfo.doors)
+            return makeRoom(k, roomInfo.sizeX, roomInfo.sizeY, k.vec2(x, y), roomInfo.doors, roomInfo.hasStairs)
         },
 
         putNewRoom() {
             k.destroy(this.currentRoomObj)
             const roomObj = this.add(this.makeRoomAtCoord(this.coordX, this.coordY))
             const evEnteredDoor = roomObj.on("mob_entered", dir => this.movedToNewRoom(dir))
-            roomObj.onDestroy(() => evEnteredDoor.cancel())
+            const evEnteredStairs = roomObj.on("mob_entered_stairs", () => this.enterTheStairs())
+            roomObj.onDestroy(() => {
+                evEnteredDoor.cancel()
+                evEnteredStairs.cancel()
+            })
             this.currentRoomObj = roomObj
         },
 

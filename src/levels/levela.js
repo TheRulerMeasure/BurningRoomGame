@@ -39,6 +39,7 @@ const level = {
     columns: 3,
     rows: 3,
     startCoord: { x: 0, y: 0 },
+    endCoord: { x: 2, y: 2 },
     roomSizes: [
         [ "3x3", "3x5", "3x3" ],
         [ "5x3", "5x3", "5x5" ],

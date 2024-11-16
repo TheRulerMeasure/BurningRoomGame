@@ -1,24 +1,45 @@
+import { default as levelA } from "./levels/levela"
+import { default as levelA2 } from "./levels/levela2"
+import { getRoomCenterWorldPos } from "./room"
 import { TeleportConst } from "./teleporter"
 
 const GameStates = {
     NORMAL: 0,
     ENTERING_TELEPORTER: 1,
     LEAVING_TELEPORTER: 2,
+    ENTERING_STAIRS: 3,
+    LEAVING_STAIRS: 4,
 }
 
 const makeGameAuto = (k) => {
     const room = {
         destInfo: null,
     }
+    const level = {
+        levelDatas: [
+            levelA,
+            levelA2,
+        ],
+        currentIndex: 0,
+        enteredStairs: false,
+    }
     const gAuto = k.make([
         k.pos(0, 0),
         "game_auto",
         {
             currentState: GameStates.NORMAL,
-            // newRoomCallback: (destInfo) => room.destInfo = destInfo,
             getDestInfo: () => room.destInfo,
             freeDestInfo: () => room.destInfo = null,
             mobEnteredNewRoom: destInfo => room.destInfo = destInfo,
+            mobEnteredStairs: () => {
+                level.currentIndex++
+                level.enteredStairs = true
+            },
+            nextLevelFromCurIndex: () => {
+                level.enteredStairs = false
+                return level.levelDatas[level.currentIndex]
+            },
+            wantsToGoNewLevel: () => level.enteredStairs,
             transitionTime: 0.0,
         },
     ])
@@ -30,6 +51,9 @@ const updateNormal = (k, gAuto) => {
         k.get("mover").forEach(mover => mover.moveProcessing = false)
         k.get("game_fader").forEach(fader => fader.faderOut())
         return GameStates.ENTERING_TELEPORTER
+    }
+    if (gAuto.wantsToGoNewLevel()) {
+        return GameStates.ENTERING_STAIRS
     }
     return -1
 }
@@ -69,6 +93,20 @@ const updateLeavingTele = (k, gAuto, dt) => {
     return -1
 }
 
+const updateEnteringStairs = (k, gAuto, dt) => {
+    return GameStates.LEAVING_STAIRS
+}
+
+const updateLeavingStairs = (k, gAuto, dt) => {
+    const levelData = gAuto.nextLevelFromCurIndex()
+    const posVec = getRoomCenterWorldPos(k, k.vec2(levelData.startCoord.x, levelData.startCoord.y))
+    k.get("player").forEach(p => p.pos = posVec)
+    k.camPos(posVec)
+    gAuto.trigger("give_new_level", levelData)
+    return GameStates.NORMAL
+}
+
+
 const gameAutoUpdate = (k, gAuto) => {
     let newState = -1
     switch (gAuto.currentState) {
@@ -77,6 +115,12 @@ const gameAutoUpdate = (k, gAuto) => {
             break
         case GameStates.LEAVING_TELEPORTER:
             newState = updateLeavingTele(k, gAuto, k.dt())
+            break
+        case GameStates.ENTERING_STAIRS:
+            newState = updateEnteringStairs(k, gAuto, k.dt())
+            break
+        case GameStates.LEAVING_STAIRS:
+            newState = updateLeavingStairs(k, gAuto, k.dt())
             break
         default:
             newState = updateNormal(k, gAuto)
