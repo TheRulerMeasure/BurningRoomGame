@@ -114,7 +114,7 @@ const updateSlimeaChasing = (k, slimea) => {
     }
     const direction = players[0].pos.sub(slimea.pos).unit()
     slimea.motionAxis = direction
-    slimea.trigger("sprite_flip", slimea.attackDir.x < 0)
+    slimea.trigger("sprite_flip", direction.x < 0)
     if (slimea.pos.dist(players[0].pos) < 198) {
         return SlimeaStates.DANCING
     }
@@ -138,7 +138,8 @@ const updateSlimeaDancing = (k, slimea) => {
         slimea.currentDanceWaypoint = getWaypointAroundPos(k, slimea.pos, players[0].pos)
     }
     slimea.motionAxis = slimea.currentDanceWaypoint.sub(slimea.pos).unit()
-    slimea.trigger("sprite_flip", slimea.attackDir.x < 0)
+    const directionToPlayer = players[0].pos.sub(slimea.pos).unit()
+    slimea.trigger("sprite_flip", directionToPlayer.x < 0)
     if (slimea.stateTimeElapse >= 2.1) {
         return SlimeaStates.ATTACKING
     }

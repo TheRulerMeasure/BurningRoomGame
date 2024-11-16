@@ -1,4 +1,5 @@
 import { TILE_HEIGHT, TILE_WIDTH } from "./gameConstant"
+import packLevel from "./levels/lvlpacker"
 import makePlayer from "./mob"
 import makeRoom, { DOOR_DOWN, DOOR_LEFT, DOOR_RIGHT, DOOR_UP, getRoomCenterWorldPos } from "./room"
 
@@ -52,10 +53,14 @@ const houseComp = (k, startCoordX, startCoordY) => {
 
         currentRoomObj: null,
 
-        roomInfos: [
-            [ { sizeX: 5, sizeY: 3, doors: { right: true } }, { sizeX: 3, sizeY: 3, doors: { left: true, right: true, down: true } }, { sizeX: 3, sizeY: 3, doors: { left: true } }, ],
-            [ { sizeX: 9, sizeY: 7, doors: { right: true }, monsters: { count: 2 } }, { sizeX: 3, sizeY: 5, doors: { left: true, right: true, up: true } }, { sizeX: 9, sizeY: 7, doors: { left: true } }, ],
-        ], // { sizeX: 3, sizeY: 3, doors: { right: true } }
+        roomInfos: [],
+
+        loadRooms(lvlData) {
+            this.roomInfos = packLevel(lvlData)
+            // console.log(this.roomInfos)
+            this.coordX = lvlData.startCoord.x
+            this.coordY = lvlData.startCoord.y
+        },
 
         initRoom() {
             const roomObj = this.add(this.makeRoomAtCoord(this.coordX, this.coordY))
@@ -102,7 +107,8 @@ const houseComp = (k, startCoordX, startCoordY) => {
 
         putMonsters(monsters) {
             this.currentRoomObj.blockDoors()
-            this.currentRoomObj.initMonsters(monsters.count)
+            this.currentRoomObj.initMonsters(monsters)
+            this.roomInfos[this.coordY][this.coordX].monsters.spawned = true
         },
     }
 }

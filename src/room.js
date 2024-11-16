@@ -219,26 +219,12 @@ const makeWallRight = (k, room, sizeX, sizeY, hasDoor) => {
     }
 }
 
-const initMonstersCs = (k, rComp, amount, diedCallback) => {
-    const floorCoord = getFloorCoord(k, rComp.sizeX, rComp.sizeY)
-    const posVec = getRoomWorldCoord(k, rComp.roomCoordv).add(floorCoord.scale(TILE_WIDTH, TILE_HEIGHT))
-    for (let i = 0; i < amount; i++) {
-        const offsetX = 32 + k.rand() * (TILE_WIDTH * rComp.sizeX - 64)
-        const offsetY = 32 + k.rand() * (TILE_HEIGHT * rComp.sizeY - 64)
-        const warningRect = k.add([
-            k.pos(posVec.add(offsetX, offsetY)),
-            k.sprite("warning_rect", { anim: "dance" }),
-            k.anchor("center"),
-            k.layer("foreground"),
-        ])
-        k.tween(0, 1, 1.12, _ => {}).onEnd(() => {
-            k.destroy(warningRect)
-            const monster = makeSlimea(k, posVec.add(offsetX, offsetY))
-            const diedEvent = monster.on("died", diedCallback)
-            monster.onDestroy(() => diedEvent.cancel())
-            k.add(monster)
-        })
-    }
+const getRandRoomWorldPos = (k, rComp) => {
+    let posVec = getRoomWorldCoord(k, rComp.roomCoordv)
+    posVec = posVec.add(getFloorCoord(k, rComp.sizeX, rComp.sizeY).scale(TILE_WIDTH, TILE_HEIGHT))
+    const offsetX = 32 + k.rand() * (TILE_WIDTH * rComp.sizeX - 64)
+    const offsetY = 32 + k.rand() * (TILE_HEIGHT * rComp.sizeY - 64)
+    return posVec.add(offsetX, offsetY)
 }
 
 const roomComp = (k, sizeX, sizeY, roomCoordv, doorsOpt) => {
@@ -249,6 +235,10 @@ const roomComp = (k, sizeX, sizeY, roomCoordv, doorsOpt) => {
         roomCoordv: roomCoordv,
         doorsOpt: doorsOpt,
         monstersCount: 0,
+        waves: [],
+        currentWaveIndex: 0,
+        currentMonsterDeathCount: 0,
+        nextWaveMonstersDeathCountGoal: 9999,
 
         blockDoors() {
             const roomPos = getRoomWorldCoord(k, this.roomCoordv)
@@ -278,17 +268,52 @@ const roomComp = (k, sizeX, sizeY, roomCoordv, doorsOpt) => {
             k.destroyAll("door_blocker")
         },
 
-        initMonsters(amount) {
-            this.monstersCount = amount
-            initMonstersCs(k, this, amount, () => {
-                this.decrementMonster()
+        putWarning(posVec) {
+            const warningRect = k.add([
+                k.pos(posVec),
+                k.sprite("warning_rect", { anim: "dance" }),
+                k.anchor("center"),
+                k.layer("foreground"),
+            ])
+            k.tween(0, 1, 0.65, _ => {}).onEnd(() => {
+                k.destroy(warningRect)
             })
         },
 
+        putMob(posVec) {
+            const mob = k.add(makeSlimea(k, k.vec2(posVec)))
+            const diedEvent = mob.on("died", () => this.decrementMonster())
+            mob.onDestroy(() => diedEvent.cancel())
+        },
+
+        putMonsters(waveIndex) {
+            const amount = this.waves[waveIndex].deployAmount
+            for (let i = 0; i < amount; i++) {
+                const posVec = getRandRoomWorldPos(k, this)
+                this.putWarning(posVec)
+                k.tween(0, 1, 0.5, _ => {}).onEnd(() => this.putMob(posVec))
+            }
+            this.nextWaveMonstersDeathCountGoal = this.waves[waveIndex + 1] ? this.waves[waveIndex + 1].deployOnDeathCount : 9999
+        },
+
+        initMonsters(monsters) {
+            this.monstersCount = monsters.maxAmount
+            this.waves = monsters.waves
+            this.currentWaveIndex = 0
+            this.currentMonsterDeathCount = 0
+            this.putMonsters(this.currentWaveIndex)
+        },
+
         decrementMonster() {
+            this.currentMonsterDeathCount++
             this.monstersCount--
             if (this.monstersCount <= 0) {
                 this.unblockDoors()
+                return
+            }
+            if (this.currentMonsterDeathCount >= this.nextWaveMonstersDeathCountGoal) {
+                this.currentWaveIndex++
+                this.putMonsters(this.currentWaveIndex)
             }
         },
 
@@ -305,7 +330,7 @@ const makeRoom = (k, sizeX, sizeY, roomCoordv, doorsOpt) => {
     drawFloorTiles(k, room, sizeX, sizeY)
     drawWallUp(k, room, sizeX, sizeY, doorsOpt.up)
     makeWallUp(k, room, sizeX, sizeY, doorsOpt.up)
-    drawWallDown(k, room, sizeX, sizeY, doorsOpt.down)
+    // drawWallDown(k, room, sizeX, sizeY, doorsOpt.down)
     makeWallDown(k, room, sizeX, sizeY, doorsOpt.down)
     makeWallLeft(k, room, sizeX, sizeY, doorsOpt.left)
     makeWallRight(k, room, sizeX, sizeY, doorsOpt.right)

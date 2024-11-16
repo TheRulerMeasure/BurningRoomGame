@@ -49,12 +49,19 @@ const updateEnteringTele = (k, gAuto, dt) => {
 
 const updateLeavingTele = (k, gAuto, dt) => {
     gAuto.transitionTime += dt
-    const exitDuration = TeleportConst.EXIT_DURATION + (gAuto.getDestInfo().monsters ? 0.5 : 0)
+    let exitDuration = TeleportConst.EXIT_DURATION // + (gAuto.getDestInfo().monsters ? 0.5 : 0)
+    if (gAuto.getDestInfo().monsters) {
+        if (!gAuto.getDestInfo().monsters.spawned) {
+            exitDuration += 0.5
+        }
+    }
     if (gAuto.transitionTime >= exitDuration) {
         gAuto.transitionTime = 0.0
         k.get("mover").forEach(mover => mover.moveProcessing = true)
         if (gAuto.getDestInfo().monsters) {
-            gAuto.trigger("found_monsters", gAuto.getDestInfo().monsters)
+            if (!gAuto.getDestInfo().monsters.spawned) {
+                gAuto.trigger("found_monsters", gAuto.getDestInfo().monsters)
+            }
         }
         gAuto.freeDestInfo()
         return GameStates.NORMAL

@@ -1,12 +1,12 @@
-import makePlayer, { addPlayerSystem } from "./mob"
-import { getWorldPosFromCellvCenter, TILE_HEIGHT } from "./gameConstant"
+import { addPlayerSystem } from "./mob"
 import radialShade from "./shaders/radialshade"
 import makeFader, { faderEvent } from "./gameFader"
-import { addDoorSystem, getRoomCenterWorldPos } from "./room"
+import { addDoorSystem } from "./room"
 import makeHouse from "./house"
 import makeGameAuto, { addGameAutoSystem } from "./gameAuto"
 import { addBulletSystem } from "./bullet"
 import { addSlimeaSystem } from "./slimea"
+import level from "./levels/levela"
 
 const MAX_ASSETS_COUNT = 9
 
@@ -53,7 +53,8 @@ const ready = (k) => {
 
     const gameAuto = k.add(makeGameAuto(k))
 
-    const house = k.add(makeHouse(k, 2, 0))
+    const house = k.add(makeHouse(k, 0, 0))
+    house.loadRooms(level)
 
     const evTeleport = [
         gameAuto.on("teleported", () => house.putNewRoom()),
@@ -64,11 +65,6 @@ const ready = (k) => {
     house.on("entered_new_room", destPos => gameAuto.mobEnteredNewRoom(destPos))
 
     house.initRoom()
-    // rooms.forEach(room => k.add(room))
-
-    // const playerPos = getWorldPosFromCellvCenter(k, k.vec2(5, 5))
-    // k.add(makePlayer(k, playerPos))
-    // k.camPos(getRoomCenterWorldPos(k, k.vec2(0, 0)).add(0, TILE_HEIGHT * -0.5))
 }
 
 const gameRun = k => {
