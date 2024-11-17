@@ -7,8 +7,9 @@ import makeGameAuto, { addGameAutoSystem } from "./gameAuto"
 import { addBulletSystem } from "./bullet"
 import { addSlimeaSystem } from "./slimea"
 import level from "./levels/levela"
+import makeHpInterface, { addHpInterfaceSystem } from "./hpinterface"
 
-const MAX_ASSETS_COUNT = 10
+const MAX_ASSETS_COUNT = 11
 
 const startLoad = (k, addProgress) => {
     k.loadSprite("ft_tile", "textures/tilemaps/ft_tile_sheet.png", {
@@ -35,9 +36,16 @@ const startLoad = (k, addProgress) => {
             die: { from: 4, to: 2, speed: 8.5 },
         },
     }).onFinish(addProgress) // 7
-    k.loadSprite("stairs", "textures/doors/stair_down.png").onFinish(addProgress) // 8
-    k.loadFont("pixel_font", "fonts/alpha-beta/alpha-beta-brk.regular.ttf").onFinish(addProgress) // 9
-    k.loadShader("radial_shade", null, radialShade).onFinish(addProgress) // 10
+    k.loadSprite("heart_beat", "textures/interfaces/heart_beat_sheet.png", {
+        sliceX: 8,
+        sliceY: 1,
+        anims: {
+            beat: { from: 0, to: 7, speed: 9, loop: true },
+        },
+    }).onFinish(addProgress) // 8
+    k.loadSprite("stairs", "textures/doors/stair_down.png").onFinish(addProgress) // 9
+    k.loadFont("pixel_font", "fonts/alpha-beta/alpha-beta-brk.regular.ttf").onFinish(addProgress) // 10
+    k.loadShader("radial_shade", null, radialShade).onFinish(addProgress) // 11
 }
 
 const ready = (k) => {
@@ -48,10 +56,14 @@ const ready = (k) => {
     addLevelStairsSystem(k)
     addBulletSystem(k)
     faderEvent.onUpdate(k)
+    addHpInterfaceSystem(k)
     addPlayerSystem(k)
     addSlimeaSystem(k)
 
     k.add(makeFader(k))
+
+    const hpInterface = k.add(makeHpInterface(k))
+    hpInterface.changeHpValue(2)
 
     const gameAuto = k.add(makeGameAuto(k))
 
@@ -64,12 +76,18 @@ const ready = (k) => {
         gameAuto.on("give_new_level", levelData => {
             house.loadRooms(levelData)
             house.putNewRoom()
-        })
+        }),
+        gameAuto.on("house_reset", (coordX, coordY) => {
+            house.putRoomAt(coordX, coordY)
+        }),
     ]
     house.onDestroy(() => gameAutoEvents.forEach(ev => ev.cancel()))
 
     house.on("entered_new_room", destPos => gameAuto.mobEnteredNewRoom(destPos))
     house.on("entered_stairs", () => gameAuto.mobEnteredStairs())
+
+    house.on("player_hp_changed", hp => hpInterface.changeHpValue(hp))
+    house.on("player_died", () => gameAuto.playerDie())
 
     house.initRoom()
 }

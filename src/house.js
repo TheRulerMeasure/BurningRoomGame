@@ -73,7 +73,17 @@ const houseComp = (k, startCoordX, startCoordY) => {
             this.currentRoomObj = roomObj
 
             let posVec = getRoomCenterWorldPos(k, k.vec2(this.coordX, this.coordY))
-            k.add(makePlayer(k, posVec))
+            const pl = k.add(makePlayer(k, posVec))
+            const evPlHurt = pl.onHurt(_ => {
+                this.trigger("player_hp_changed", pl.hp())
+            })
+            const evPlDie = pl.onDeath(() => {
+                this.trigger("player_died")
+            })
+            pl.onDestroy(() => {
+                evPlHurt.cancel()
+                evPlDie.cancel()
+            })
 
             k.camPos(getRoomCenterWorldPos(k, k.vec2(this.coordX, this.coordY)).add(0, TILE_HEIGHT * -0.5))
         },
@@ -121,6 +131,12 @@ const houseComp = (k, startCoordX, startCoordY) => {
             this.currentRoomObj.initMonsters(monsters)
             this.roomInfos[this.coordY][this.coordX].monsters.spawned = true
         },
+
+        putRoomAt(coordX, coordY) {
+            this.coordX = coordX
+            this.coordY = coordY
+            this.putNewRoom()
+        }
     }
 }
 

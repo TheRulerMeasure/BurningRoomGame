@@ -9,6 +9,7 @@ const GameStates = {
     LEAVING_TELEPORTER: 2,
     ENTERING_STAIRS: 3,
     LEAVING_STAIRS: 4,
+    RESTARTING_LEVEL: 5,
 }
 
 const makeGameAuto = (k) => {
@@ -23,24 +24,38 @@ const makeGameAuto = (k) => {
         currentIndex: 0,
         enteredStairs: false,
     }
+    const house = {
+        playerAlive: true,
+    }
     const gAuto = k.make([
         k.pos(0, 0),
         "game_auto",
         {
             currentState: GameStates.NORMAL,
+            transitionTime: 0.0,
+
             getDestInfo: () => room.destInfo,
+
             freeDestInfo: () => room.destInfo = null,
+
             mobEnteredNewRoom: destInfo => room.destInfo = destInfo,
+
             mobEnteredStairs: () => {
                 level.currentIndex++
                 level.enteredStairs = true
             },
+
             nextLevelFromCurIndex: () => {
                 level.enteredStairs = false
                 return level.levelDatas[level.currentIndex]
             },
+
             wantsToGoNewLevel: () => level.enteredStairs,
-            transitionTime: 0.0,
+
+            playerDie: () => house.playerAlive = false,
+            playerRevive: () => house.playerAlive = true,
+
+            isPlayerAlive: () => house.playerAlive,
         },
     ])
     return gAuto
@@ -54,6 +69,9 @@ const updateNormal = (k, gAuto) => {
     }
     if (gAuto.wantsToGoNewLevel()) {
         return GameStates.ENTERING_STAIRS
+    }
+    if (!gAuto.isPlayerAlive()) {
+        return GameStates.RESTARTING_LEVEL
     }
     return -1
 }
@@ -73,7 +91,7 @@ const updateEnteringTele = (k, gAuto, dt) => {
 
 const updateLeavingTele = (k, gAuto, dt) => {
     gAuto.transitionTime += dt
-    let exitDuration = TeleportConst.EXIT_DURATION // + (gAuto.getDestInfo().monsters ? 0.5 : 0)
+    let exitDuration = TeleportConst.EXIT_DURATION
     if (gAuto.getDestInfo().monsters) {
         if (!gAuto.getDestInfo().monsters.spawned) {
             exitDuration += 0.5
@@ -106,6 +124,20 @@ const updateLeavingStairs = (k, gAuto, dt) => {
     return GameStates.NORMAL
 }
 
+const updateRestartingLevel = (k, gAuto, dt) => {
+    console.log("restartin")
+    k.destroyAll("enemy")
+    const levelData = gAuto.nextLevelFromCurIndex()
+    const posVec = getRoomCenterWorldPos(k, k.vec2(levelData.startCoord.x, levelData.startCoord.y))
+    k.get("player").forEach(p => {
+        p.setHP(2)
+        p.pos = posVec
+    })
+    k.camPos(posVec)
+    gAuto.trigger("house_reset", levelData.startCoord.x, levelData.startCoord.y)
+    gAuto.playerRevive()
+    return GameStates.NORMAL
+}
 
 const gameAutoUpdate = (k, gAuto) => {
     let newState = -1
@@ -121,6 +153,9 @@ const gameAutoUpdate = (k, gAuto) => {
             break
         case GameStates.LEAVING_STAIRS:
             newState = updateLeavingStairs(k, gAuto, k.dt())
+            break
+        case GameStates.RESTARTING_LEVEL:
+            newState = updateRestartingLevel(k, gAuto, k.dt())
             break
         default:
             newState = updateNormal(k, gAuto)

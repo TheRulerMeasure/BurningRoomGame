@@ -1,30 +1,39 @@
 
-const makeBullet = (k, pos, dir, speed) => k.make([
-    k.pos(pos),
-    k.sprite("bullet_sp"),
-    k.anchor("center"),
-    k.area(),
-    k.move(dir, speed),
-    k.offscreen({ destroy: true }),
-    "bullet",
-])
+const makeBullet = (k, pos, dir, speed) => {
+    const bullet = k.make([
+        k.pos(pos),
+        k.sprite("bullet_sp"),
+        k.anchor("center"),
+        k.move(dir, speed),
+        k.offscreen({ destroy: true }),
+        "bullet",
+    ])
+    bullet.add([
+        k.pos(),
+        k.rect(16, 16),
+        k.anchor("center"),
+        k.area(),
+        "bullet_rect"
+    ])
+    return bullet
+}
 
 const bulletOnCollide1 = k => {
-    k.onCollide("bullet", "room_wall", (bullet, roomWall, col) => {
-        k.destroy(bullet)
+    k.onCollide("bullet_rect", "room_wall", (bullet, roomWall, col) => {
+        k.destroy(bullet.parent)
     })
 }
 
 const bulletOnCollide2 = k => {
-    k.onCollide("bullet", "door_blocker", (bullet, roomWall, col) => {
-        k.destroy(bullet)
+    k.onCollide("bullet_rect", "door_blocker", (bullet, roomWall, col) => {
+        k.destroy(bullet.parent)
     })
 }
 
 const bulletOnCollide3 = k => {
-    k.onCollide("bullet", "team2_hitbox", (bullet, hitbox, col) => {
+    k.onCollide("bullet_rect", "team2_hitbox", (bullet, hitbox, col) => {
         const dir = hitbox.worldPos().sub(bullet.pos).unit()
-        k.destroy(bullet)
+        k.destroy(bullet.parent)
         hitbox.takeDamage(2, dir)
     })
 }

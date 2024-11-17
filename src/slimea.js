@@ -10,6 +10,23 @@ const SlimeaStates = {
     SPAWNING:   6,
 }
 
+const makeHurtBox = k => {
+    const hurtBox = k.make([
+        k.pos(0, 0),
+        k.rect(64, 64),
+        k.anchor("center"),
+        k.area(),
+        k.opacity(1),
+    ])
+
+    hurtBox.onCollide("team1_hitbox", (hitbox, col) => {
+        console.log("hit a hitbox")
+        hitbox.takeDamage(1)
+    })
+
+    return hurtBox
+}
+
 const hitboxComp = () => {
     return {
         id: "hitbox",
@@ -40,6 +57,7 @@ const onSlimeaEnterAttacking = (k, slimea) => {
         attackDir = players[0].pos.sub(slimea.pos).unit()
         slimea.attackDir = attackDir
     }
+    slimea.enableAreaAttack()
     slimea.trigger("sprite_flip", slimea.attackDir.x < 0)
 }
 
@@ -47,6 +65,7 @@ const onSlimeaLeaveAttacking = (k, slimea) => {
     slimea.movementInfo.acceleration = slimea.normalMoverComp.acceleration
     slimea.movementInfo.maxSpeed = slimea.normalMoverComp.maxSpeed
     slimea.movementInfo.friction = slimea.normalMoverComp.friction
+    slimea.disableAreaAttack()
 }
 
 const onSlimeaEnterRecovering = (k, slimea) => {
@@ -236,20 +255,41 @@ const slimeaComp = k => {
         danceTimeElapse: 0.0,
         currentDanceWaypoint: k.vec2(100, 100),
         attackDir: k.vec2(),
+        areaAttack: null,
+
+        enableAreaAttack() {
+            if (this.areaAttack) {
+                if (this.areaAttack.exists()) {
+                    k.destroy(this.areaAttack)
+                }
+            }
+            this.areaAttack = this.add(makeHurtBox(k))
+            console.log("start attacking!")
+        },
+
+        disableAreaAttack() {
+            if (this.areaAttack) {
+                if (this.areaAttack.exists()) {
+                    k.destroy(this.areaAttack)
+                }
+            }
+            console.log("stop attacking!")
+        },
     }
 }
 
 const makeSlimea = (k, posVec) => {
     const comp = createMoverComp(1245, 109, 960)
     const slimea = makeMover(k, posVec, 32, 32, "slimea", comp)
+    slimea.tags.push("enemy")
     slimea.use(slimeaComp(k))
     slimea.use(k.health(10))
 
     const hitbox = k.make([
         k.pos(),
-        k.rect(64, 64),
-        k.area(),
+        k.rect(48, 48),
         k.anchor("center"),
+        k.area(),
         k.opacity(0),
         hitboxComp(),
         "team2_hitbox",
