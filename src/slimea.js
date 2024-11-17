@@ -20,7 +20,6 @@ const makeHurtBox = k => {
     ])
 
     hurtBox.onCollide("team1_hitbox", (hitbox, col) => {
-        console.log("hit a hitbox")
         hitbox.takeDamage(1)
     })
 
@@ -264,7 +263,6 @@ const slimeaComp = k => {
                 }
             }
             this.areaAttack = this.add(makeHurtBox(k))
-            console.log("start attacking!")
         },
 
         disableAreaAttack() {
@@ -273,15 +271,16 @@ const slimeaComp = k => {
                     k.destroy(this.areaAttack)
                 }
             }
-            console.log("stop attacking!")
         },
     }
 }
 
 const makeSlimea = (k, posVec) => {
     const comp = createMoverComp(1245, 109, 960)
-    const slimea = makeMover(k, posVec, 32, 32, "slimea", comp)
-    slimea.tags.push("enemy")
+    const slimea = makeMover(k, posVec, 32, 32)
+    slimea.setMovementProperties(comp)
+    slimea.use("slimea")
+    slimea.use("enemy")
     slimea.use(slimeaComp(k))
     slimea.use(k.health(10))
 

@@ -30,8 +30,4 @@ const k = kaplay({
     plugins: [ gamePlugin ],
 })
 
-// k.add([
-//     k.health(13)
-// ]).setHP()
-
 k.run()

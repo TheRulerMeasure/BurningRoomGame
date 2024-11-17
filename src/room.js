@@ -260,16 +260,20 @@ const roomComp = (k, sizeX, sizeY, roomCoordv, doorsOpt) => {
             ])
             const floorCoord = getFloorCoord(k, this.sizeX, this.sizeY)
             if (this.doorsOpt.up) {
-                k.add(makeDoorBlocker(floorCoord.add(Math.floor(this.sizeX / 2), -1).scale(TILE_WIDTH, TILE_HEIGHT)))
+                const blocker = k.add(makeDoorBlocker(floorCoord.add(Math.floor(this.sizeX / 2), -1).scale(TILE_WIDTH, TILE_HEIGHT)))
+                this.onDestroy(() => k.destroy(blocker))
             }
             if (this.doorsOpt.down) {
-                k.add(makeDoorBlocker(floorCoord.add(Math.floor(this.sizeX / 2), this.sizeY).scale(TILE_WIDTH, TILE_HEIGHT)))
+                const blocker = k.add(makeDoorBlocker(floorCoord.add(Math.floor(this.sizeX / 2), this.sizeY).scale(TILE_WIDTH, TILE_HEIGHT)))
+                this.onDestroy(() => k.destroy(blocker))
             }
             if (this.doorsOpt.left) {
-                k.add(makeDoorBlocker(floorCoord.add(-1, Math.floor(this.sizeY / 2)).scale(TILE_WIDTH, TILE_HEIGHT)))
+                const blocker = k.add(makeDoorBlocker(floorCoord.add(-1, Math.floor(this.sizeY / 2)).scale(TILE_WIDTH, TILE_HEIGHT)))
+                this.onDestroy(() => k.destroy(blocker))
             }
             if (this.doorsOpt.right) {
-                k.add(makeDoorBlocker(floorCoord.add(this.sizeX, Math.floor(this.sizeY / 2)).scale(TILE_WIDTH, TILE_HEIGHT)))
+                const blocker = k.add(makeDoorBlocker(floorCoord.add(this.sizeX, Math.floor(this.sizeY / 2)).scale(TILE_WIDTH, TILE_HEIGHT)))
+                this.onDestroy(() => k.destroy(blocker))
             }
         },
 
@@ -293,6 +297,7 @@ const roomComp = (k, sizeX, sizeY, roomCoordv, doorsOpt) => {
             const mob = k.add(makeSlimea(k, k.vec2(posVec)))
             const diedEvent = mob.on("died", () => this.decrementMonster())
             mob.onDestroy(() => diedEvent.cancel())
+            this.onDestroy(() => k.destroy(mob))
         },
 
         putMonsters(waveIndex) {
@@ -300,9 +305,18 @@ const roomComp = (k, sizeX, sizeY, roomCoordv, doorsOpt) => {
             for (let i = 0; i < amount; i++) {
                 const posVec = getRandRoomWorldPos(k, this)
                 this.putWarning(posVec)
-                k.tween(0, 1, 0.5, _ => {}).onEnd(() => this.putMob(posVec))
+
+                const tweenCon = k.tween(0, 1, 0.5, _ => {})
+                tweenCon.onEnd(() => {
+                    this.putMob(posVec)
+                })
+                this.onDestroy(() => tweenCon.cancel())
             }
-            this.nextWaveMonstersDeathCountGoal = this.waves[waveIndex + 1] ? this.waves[waveIndex + 1].deployOnDeathCount : 9999
+            if (this.waves[waveIndex + 1]) {
+                this.nextWaveMonstersDeathCountGoal = this.waves[waveIndex + 1].deployOnDeathCount
+            } else {
+                this.nextWaveMonstersDeathCountGoal = 9999
+            }
         },
 
         initMonsters(monsters) {

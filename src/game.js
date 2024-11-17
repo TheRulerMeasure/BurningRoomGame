@@ -78,7 +78,7 @@ const ready = (k) => {
             house.putNewRoom()
         }),
         gameAuto.on("house_reset", (coordX, coordY) => {
-            house.putRoomAt(coordX, coordY)
+            house.houseReset(coordX, coordY)
         }),
     ]
     house.onDestroy(() => gameAutoEvents.forEach(ev => ev.cancel()))

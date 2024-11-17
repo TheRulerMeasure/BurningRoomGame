@@ -136,7 +136,12 @@ const houseComp = (k, startCoordX, startCoordY) => {
             this.coordX = coordX
             this.coordY = coordY
             this.putNewRoom()
-        }
+        },
+
+        houseReset(coordX, coordY) {
+            this.roomInfos[this.coordY][this.coordX].monsters.spawned = false
+            this.putRoomAt(coordX, coordY)
+        },
     }
 }
 

@@ -21,8 +21,8 @@ const gunComp = k => ({
 })
 
 const makePlayer = (k, pos) => {
-    const comp = createMoverComp(1437, 163, 964)
-    const player = makeMover(k, pos, 32, 32, "player", comp)
+    const player = makeMover(k, pos, 32, 32)
+    player.use("player")
     player.use(gunComp(k))
     player.use(k.health(2))
 

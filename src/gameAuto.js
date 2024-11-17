@@ -125,13 +125,15 @@ const updateLeavingStairs = (k, gAuto, dt) => {
 }
 
 const updateRestartingLevel = (k, gAuto, dt) => {
-    console.log("restartin")
-    k.destroyAll("enemy")
+    // k.destroyAll("enemy")
     const levelData = gAuto.nextLevelFromCurIndex()
     const posVec = getRoomCenterWorldPos(k, k.vec2(levelData.startCoord.x, levelData.startCoord.y))
     k.get("player").forEach(p => {
         p.setHP(2)
         p.pos = posVec
+    })
+    k.get("hp_bar").forEach(bar => {
+        bar.changeHpValue(2)
     })
     k.camPos(posVec)
     gAuto.trigger("house_reset", levelData.startCoord.x, levelData.startCoord.y)
