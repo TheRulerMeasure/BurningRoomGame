@@ -6,10 +6,10 @@ import makeHouse from "./house"
 import makeGameAuto, { addGameAutoSystem } from "./gameAuto"
 import { addBulletSystem } from "./bullet"
 import { addSlimeaSystem } from "./slimea"
-import level from "./levels/levela"
+import level from "./levels/levela2"
 import makeHpInterface, { addHpInterfaceSystem } from "./hpinterface"
 
-const MAX_ASSETS_COUNT = 11
+const MAX_ASSETS_COUNT = 14
 
 const startLoad = (k, addProgress) => {
     k.loadSprite("ft_tile", "textures/tilemaps/ft_tile_sheet.png", {
@@ -17,8 +17,20 @@ const startLoad = (k, addProgress) => {
         sliceY: 1,
     }).onFinish(addProgress) // 1
     k.loadSprite("checker_down", "textures/interfaces/checkers2.png").onFinish(addProgress) // 2
-    k.loadSprite("bean", "sprites/bean.png").onFinish(addProgress) // 3
-    k.loadSprite("bullet_sp", "textures/projectiles/bullet.png").onFinish(addProgress) // 4
+    k.loadSprite("hero", "textures/mobs/hero.png", {
+        sliceX: 2,
+        sliceY: 1,
+        anims: {
+            run: { from: 0, to: 1, speed: 6, loop: true }
+        }
+    }).onFinish(addProgress) // 3
+    k.loadSprite("dagger", "textures/projectiles/dagger.png", {
+        sliceX: 8,
+        sliceY: 1,
+        anims: {
+            spin: { from: 0, to: 7, speed: 55, loop: true },
+        },
+    }).onFinish(addProgress) // 4
     k.loadSprite("x_mark", "textures/obstacles/x_mark.png").onFinish(addProgress) // 5
     k.loadSprite("warning_rect", "textures/interfaces/warning_rect_sheet.png", {
         sliceX: 3,
@@ -44,8 +56,17 @@ const startLoad = (k, addProgress) => {
         },
     }).onFinish(addProgress) // 8
     k.loadSprite("stairs", "textures/doors/stair_down.png").onFinish(addProgress) // 9
-    k.loadFont("pixel_font", "fonts/alpha-beta/alpha-beta-brk.regular.ttf").onFinish(addProgress) // 10
-    k.loadShader("radial_shade", null, radialShade).onFinish(addProgress) // 11
+    k.loadSprite("instruction_sp", "textures/interfaces/instructions_sheet.png", {
+        sliceX: 3,
+        sliceY: 1,
+        anims: {
+            dance: { from: 0, to: 2, speed: 15, loop: true },
+        },
+    }).onFinish(addProgress) // 10
+    k.loadSprite("egg", "textures/interfaces/egg.png").onFinish(addProgress) // 11
+    k.loadSprite("egg_text", "textures/interfaces/youve_found_an_egg.png").onFinish(addProgress) // 12
+    k.loadFont("pixel_font", "fonts/alpha-beta/alpha-beta-brk.regular.ttf").onFinish(addProgress) // 13
+    k.loadShader("radial_shade", null, radialShade).onFinish(addProgress) // 14
 }
 
 const ready = (k) => {

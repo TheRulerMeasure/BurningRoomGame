@@ -24,7 +24,7 @@ const k = kaplay({
             keyboard: ["down", "s"],
         },
         shoot: {
-            mouse: ["left"],
+            mouse: ["left", "space"],
         },
     },
     plugins: [ gamePlugin ],

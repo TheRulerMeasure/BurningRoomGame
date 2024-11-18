@@ -21,12 +21,32 @@ const getDoorsFromSymbol = charSymbol => {
 
 const getRoomData = (lvlData, x, y) => {
     const s = lvlData.roomSizes[y][x].split("x")
+    let hasStairs = false
+    if (lvlData.endCoord) {
+        if ((x == lvlData.endCoord.x) && (y == lvlData.endCoord.y)) {
+            hasStairs = true
+        }
+    }
+    let hasEgg = false
+    if (lvlData.eggCoord) {
+        if ((x == lvlData.eggCoord.x) && (y == lvlData.eggCoord.y)) {
+            hasEgg = true
+        }
+    }
+    let hasInstruction = false
+    if (lvlData.instructionCoord) {
+        if ((x == lvlData.instructionCoord.x) && (y == lvlData.instructionCoord.y)) {
+            hasInstruction = true
+        }
+    }
     return {
         sizeX: Number(s[0]),
         sizeY: Number(s[1]),
         doors: lvlData.doors ? getDoorsFromSymbol(lvlData.doors[y].at(x)) : null,
         monsters: lvlData.monsters ? lvlData.monsters[y][x] : null,
-        hasStairs: (x == lvlData.endCoord.x) && (y == lvlData.endCoord.y),
+        hasStairs: hasStairs,
+        hasEgg: hasEgg,
+        hasInstruction: hasInstruction,
     }
 }
 

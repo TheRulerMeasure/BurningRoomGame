@@ -111,7 +111,16 @@ const houseComp = (k, startCoordX, startCoordY) => {
 
         makeRoomAtCoord(x, y) {
             const roomInfo = this.roomInfos[y][x]
-            return makeRoom(k, roomInfo.sizeX, roomInfo.sizeY, k.vec2(x, y), roomInfo.doors, roomInfo.hasStairs)
+            return makeRoom(
+                k,
+                roomInfo.sizeX,
+                roomInfo.sizeY,
+                k.vec2(x, y),
+                roomInfo.doors,
+                roomInfo.hasStairs,
+                roomInfo.hasInstruction,
+                roomInfo.hasEgg,
+            )
         },
 
         putNewRoom() {

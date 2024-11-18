@@ -1,4 +1,5 @@
 import { TILE_HEIGHT, TILE_WIDTH } from "./gameConstant"
+import makeInstructionLabel, { makeEggLabel } from "./roomlabel"
 import makeSlimea from "./slimea"
 
 const MAX_ROOM_WIDTH = 12
@@ -343,7 +344,7 @@ const roomComp = (k, sizeX, sizeY, roomCoordv, doorsOpt) => {
     }
 }
 
-const makeRoom = (k, sizeX, sizeY, roomCoordv, doorsOpt, hasStairs) => {
+const makeRoom = (k, sizeX, sizeY, roomCoordv, doorsOpt, hasStairs, hasInstruction, hasEgg) => {
     const roomPos = getRoomWorldCoord(k, roomCoordv)
     const room = k.make([
         k.pos(roomPos),
@@ -355,6 +356,12 @@ const makeRoom = (k, sizeX, sizeY, roomCoordv, doorsOpt, hasStairs) => {
         const posVec = k.vec2(MAX_ROOM_WIDTH * TILE_WIDTH * 0.5, MAX_ROOM_HEIGHT * TILE_HEIGHT * 0.5)
         const stairs = room.add(makeStairs(k, posVec))
         stairs.on("mob_entered_stairs", () => room.trigger("mob_entered_stairs"))
+    }
+    if (hasInstruction) {
+        room.add(makeInstructionLabel(k))
+    }
+    if (hasEgg) {
+        room.add(makeEggLabel(k))
     }
     drawWallUp(k, room, sizeX, sizeY, doorsOpt.up)
     makeWallUp(k, room, sizeX, sizeY, doorsOpt.up)

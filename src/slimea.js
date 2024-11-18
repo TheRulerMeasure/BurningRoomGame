@@ -16,7 +16,7 @@ const makeHurtBox = k => {
         k.rect(64, 64),
         k.anchor("center"),
         k.area(),
-        k.opacity(1),
+        k.opacity(0),
     ])
 
     hurtBox.onCollide("team1_hitbox", (hitbox, col) => {

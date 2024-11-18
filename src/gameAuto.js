@@ -1,6 +1,11 @@
 import { default as levelA } from "./levels/levela"
 import { default as levelA2 } from "./levels/levela2"
+import { default as LevelB } from "./levels/levelb"
+import { default as LevelC } from "./levels/levelc"
+import { default as LevelD } from "./levels/leveld"
+import { default as LevelE } from "./levels/levele"
 import { getRoomCenterWorldPos } from "./room"
+import { makeStatsLabel } from "./roomlabel"
 import { TeleportConst } from "./teleporter"
 
 const GameStates = {
@@ -17,16 +22,17 @@ const makeGameAuto = (k) => {
         destInfo: null,
     }
     const level = {
-        levelDatas: [
-            levelA,
-            levelA2,
-        ],
+        levelDatas: [levelA2, levelA, LevelB, LevelC, LevelD, LevelE],
         currentIndex: 0,
         enteredStairs: false,
     }
-    const house = {
+    const playerInfo = {
         playerAlive: true,
+        playerHealth: 2,
+        playerAttackSpeed: 2.9,
+        rebirth: 0,
     }
+
     const gAuto = k.make([
         k.pos(0, 0),
         "game_auto",
@@ -47,15 +53,31 @@ const makeGameAuto = (k) => {
 
             nextLevelFromCurIndex: () => {
                 level.enteredStairs = false
+                if (level.levelDatas[level.currentIndex]) {
+                    console.log("has level")
+                } else {
+                    console.log("no level")
+                }
                 return level.levelDatas[level.currentIndex]
             },
 
             wantsToGoNewLevel: () => level.enteredStairs,
 
-            playerDie: () => house.playerAlive = false,
-            playerRevive: () => house.playerAlive = true,
+            playerDie: () => {
+                playerInfo.playerAlive = false
+                playerInfo.playerHealth += 1
+                playerInfo.playerAttackSpeed += 0.5
+            },
+            playerRevive: () => {
+                playerInfo.playerAlive = true
+                playerInfo.rebirth += 1
+                k.add(makeStatsLabel(k, playerInfo))
+            },
 
-            isPlayerAlive: () => house.playerAlive,
+            getCurPlayerHealth: () => playerInfo.playerHealth,
+            getCurPlayerAttackSpeed: () => playerInfo.playerAttackSpeed,
+
+            isPlayerAlive: () => playerInfo.playerAlive,
         },
     ])
     return gAuto
@@ -125,11 +147,11 @@ const updateLeavingStairs = (k, gAuto, dt) => {
 }
 
 const updateRestartingLevel = (k, gAuto, dt) => {
-    // k.destroyAll("enemy")
     const levelData = gAuto.nextLevelFromCurIndex()
     const posVec = getRoomCenterWorldPos(k, k.vec2(levelData.startCoord.x, levelData.startCoord.y))
     k.get("player").forEach(p => {
-        p.setHP(2)
+        p.setHP(gAuto.getCurPlayerHealth())
+        p.shootSpeed = gAuto.getCurPlayerAttackSpeed()
         p.pos = posVec
     })
     k.get("hp_bar").forEach(bar => {

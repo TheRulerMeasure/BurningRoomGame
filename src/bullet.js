@@ -2,7 +2,7 @@
 const makeBullet = (k, pos, dir, speed) => {
     const bullet = k.make([
         k.pos(pos),
-        k.sprite("bullet_sp"),
+        k.sprite("dagger", { anim: "spin" }),
         k.anchor("center"),
         k.move(dir, speed),
         k.offscreen({ destroy: true }),
@@ -11,6 +11,7 @@ const makeBullet = (k, pos, dir, speed) => {
     bullet.add([
         k.pos(),
         k.rect(16, 16),
+        k.opacity(0),
         k.anchor("center"),
         k.area(),
         "bullet_rect"

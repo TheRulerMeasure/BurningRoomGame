@@ -58,7 +58,7 @@ const makeMover = (k, pos, width, height) => {
         k.area(),
         k.body(),
         k.anchor("center"),
-        k.opacity(0.5),
+        k.opacity(0),
         moverComp(k),
         "mover",
     ])
